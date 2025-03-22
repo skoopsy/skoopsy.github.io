@@ -44,6 +44,25 @@ Some examples of these are:
 - [Espressif ESP32-WROOM](https://www.espressif.com/en/products/socs/esp32) - This is a development board for the Espressif ESP32 chip which packs a punch for the price with WiFi and Bluetooth at a very low cost. Again, not a STM32 chip, is based on Espressifs flavour of the [Xtensa LXn](https://www.cadence.com/en_US/home/tools/silicon-solutions/compute-ip/tensilica-xtensa-controllers-and-extensible-processors/xtensa-lx-processor-platform.html) architecture 
 
 - [ST Nucleo M-Bed L152RE](https://os.mbed.com/platforms/ST-Nucleo-L152RE/) - This IS an STM32 development board and uses the [ARM Cortex architecture](https://en.wikipedia.org/wiki/ARM_architecture_family). It also comes with the ST-LINK/V2-1 debugger/programmer hardware attached. The ARM architecture is widely used in embedded IoT applications including some Laptops and Phones. I will initially be using this board.
+here are many codes and types, here is an overview them:
+
+# STM32
+To be clear ST Microelectronics make chips and sell them. ARM "design" chip architectures and sell the intellectual properties to companies like ST Microelectronics. So there are many flavours of ARM from different manaufacturers.
+
+I'm interested in the STM32 chips because they are widely available, offer cheap development boards, have reasonably good platforms for learning on, and the designs can be scaled up to professional level applications. It seems like a solid approach to learning the Arm Cortex Architecture.
+
+Here is a rundown on their main chip families:
+
+- STM32F0 - Arm Cortex M0
+- STM32F1 - Arm Cortex M3s
+- STM32F3 - Arm Cortex M4
+- STM32F7 - Arm Cortex M7
+- STM32H5 - Arm Cortex M33
+- STM32N6 - Arm Cortex M55
+
+The M33 and M55 are much newer chips and are what I will be aiming to use in future projects and will proably replace the M0, M3, and M4 systems in the future. There are many varients within the lists above, these are the codes appended at the end of the STM32 code, they typically refer to things like the amount of onboard flash, clock speed, and additional capabilities such as floating point units and dsp modules.
+
+Here is a [rundown from STMicroelectronics](https://www.st.com/en/microcontrollers-microprocessors/stm32-high-performance-mcus.html) on their offerings.
 
 # The Docs
 
@@ -54,7 +73,7 @@ This comment, from who I'll call "The Alchemist" gave more introductory gold: Ma
 - Development Board Datasheet
     
     - External pin outs, on board peripherals, and general spec of the board. 
-    - I am using a [ST Nucleo L152RE (MB1136)](https://www.st.com/en/evaluation-tools/nucleo-l152re.html)
+    - I am using a [ST Nucleo L152RE (MB1136)](https://www.st.com/en/evaluation-tools/nucleo-l152re.html).
 
 
 - Micro Controller Unit Product Specification Sheet
@@ -73,7 +92,7 @@ This comment, from who I'll call "The Alchemist" gave more introductory gold: Ma
 
     - Provides information for application and system-level software
 developers - It gives a full description of the processor programming model, instruction set and core peripherals
-    - [Programming Manual PM0056 - Direct download](https://www.st.com/resource/en/programming_manual/pm0056-stm32f10xxx20xxx21xxxl1xxxx-cortexm3-programming-manual-stmicroelectronics.pdf)
+    - [Programming Manual PM0056 - Direct download](https://www.st.com/resource/en/programming_manual/pm0056-stm32f10xxx20xxx21xxxl1xxxx-cortexm3-programming-manual-stmicroelectronics.pdf).
 
 
 - Application Notes
