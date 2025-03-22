@@ -1,0 +1,23 @@
+---
+layout: post
+title:  "STM32 #2 Blinky"
+date:   2025-03-22 00:00:00 +0000
+categories: STM32
+---
+
+# Blinky on the Nucleo L152RE 
+I had this board lying around and it happend to be using a ARM Cortex M3 which is something I am interested in learning the architecture for. So I started with some basic guides from the [stm-base](https://stm32-base.org/guides/) project mentioned in the previous [post](https://skoopsy.dev/stm32/2025/03/14/STM32-1-getting-started.html).
+
+
+
+
+<script src="https://utteranc.es/client.js"
+        repo="skoopsy/skoopsy.github.io"
+        issue-term="pathname"
+        label="blog-embedded1"
+        theme="preferred-color-scheme"
+        crossorigin="anonymous"
+        async>
+</script>
+
+Copywrite © 2025 Skoopsy
