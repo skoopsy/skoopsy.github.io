@@ -47,7 +47,9 @@ Some examples of these are:
 here are many codes and types, here is an overview them:
 
 # STM32
-I'm interested in the STM32 chips because they are widely available and used in many professional level applications, whilst still having a reasonably good ecosystem for learning with cheap development boards. This seemed a greatway to understand and learn more about the ARM Cortex based architecture.
+To be clear ST Microelectronics make chips and sell them. ARM "design" chip architectures and sell the intellectual properties to companies like ST Microelectronics. So there are many flavours of ARM from different manaufacturers.
+
+I'm interested in the STM32 chips because they are widely available, offer cheap development boards, have reasonably good platforms for learning on, and the designs can be scaled up to professional level applications. It seems like a solid approach to learning the Arm Cortex Architecture.
 
 Here is a rundown on some of their most intereting chips to me:
 
