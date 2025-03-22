@@ -10,7 +10,6 @@ I had this board lying around and it happend to be using a ARM Cortex M3 which i
 
 
 
-
 <script src="https://utteranc.es/client.js"
         repo="skoopsy/skoopsy.github.io"
         issue-term="pathname"

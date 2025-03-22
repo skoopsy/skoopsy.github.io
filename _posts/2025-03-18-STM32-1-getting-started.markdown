@@ -54,7 +54,7 @@ I'm interested in the STM32 chips because they are widely available, offer cheap
 Here is a rundown on their main chip families:
 
 - STM32F0 - Arm Cortex M0
-- STM32F1 - Arm Cortex M3s
+- STM32F1 - Arm Cortex M3
 - STM32F3 - Arm Cortex M4
 - STM32F7 - Arm Cortex M7
 - STM32H5 - Arm Cortex M33
