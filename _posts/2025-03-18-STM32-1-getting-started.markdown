@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "STM32 #1 Getting Started with Embedded"
-date:   2024-08-14 17:39:58 +0100
+date:   2025-03-14 00:00:00 +0000
 categories: STM32
 ---
 
@@ -45,12 +45,6 @@ Some examples of these are:
 
 - [ST Nucleo M-Bed L152RE](https://os.mbed.com/platforms/ST-Nucleo-L152RE/) - This IS an STM32 development board and uses the [ARM Cortex architecture](https://en.wikipedia.org/wiki/ARM_architecture_family). It also comes with the ST-LINK/V2-1 debugger/programmer hardware attached. The ARM architecture is widely used in embedded IoT applications including some Laptops and Phones. I will initially be using this board.
 
-# Languages 
-
-So embedded is typically C right? Well C++ seems to be growing which makes sense because you can compile C with a C++ compiler and memory is getting bigger on chips these days. There is also the 'new' kid on the block - Rust. I'm going to stick with C... for now, but Rust is very interesting and potentially the future, although the advice right seems to be that the Libraries for Rust are not quite there yet, so if you are keen with data sheets and building things from scratch maybe that's the way to go. Some people talk about micro Python and Java but I think I just threw up a bit in my mouth so need to go wash that out.
-
-Here's a list of embedded languages from [geekstogeeks](https://www.geeksforgeeks.org/embedded-systems-programming-languages/) from people who are probably much more worth listening to than me.
-
 # The Docs
 
 This comment, from who I'll call "The Alchemist" gave more introductory gold: Manuals. There are different levels of manuals for embedded documentation, here are some of them:
@@ -62,15 +56,18 @@ This comment, from who I'll call "The Alchemist" gave more introductory gold: Ma
     - External pin outs, on board peripherals, and general spec of the board. 
     - I am using a [ST Nucleo L152RE (MB1136)](https://www.st.com/en/evaluation-tools/nucleo-l152re.html)
 
+
 - Micro Controller Unit Product Specification Sheet
 
     - Pin outs, on chip peripherals, and general specs of the MCU.
     -  The ST Nucleo L152RE uses a [Cortex M3 MCU (STM32L152RE)](https://www.st.com/en/microcontrollers-microprocessors/stm32l152re.html), find the product specification there.
 
+
 - Reference Manual
     
     - Provides information for application level software. This is a beast of a document (>900 pages) giving details on the MCU family, the alchemist advises using this as your guide to programming and pheripheral capabilities. 
     - Manual for the board I am using [RM0038 Reference Manual - Direct download](https://www.st.com/resource/en/reference_manual/cd00240193-stm32l100xx-stm32l151xx-stm32l152xx-and-stm32l162xx-advanced-arm-based-32-bit-mcus-stmicroelectronics.pdf), here is a link to the [preceeding documentation page](https://www.st.com/en/microcontrollers-microprocessors/stm32l151-152/documentation.html) if direct download links are insulting.
+
 
 - Programming Manual
 
@@ -78,10 +75,12 @@ This comment, from who I'll call "The Alchemist" gave more introductory gold: Ma
 developers - It gives a full description of the processor programming model, instruction set and core peripherals
     - [Programming Manual PM0056 - Direct download](https://www.st.com/resource/en/programming_manual/pm0056-stm32f10xxx20xxx21xxxl1xxxx-cortexm3-programming-manual-stmicroelectronics.pdf)
 
+
 - Application Notes
 
     - A whole bunch of documents going into specifc areas of interest
     - There are 38 application notes for the [L152RE on the ST site](https://www.st.com/en/microcontrollers-microprocessors/stm32l152re.html#documentation), some examples include; Digital signal processing, clock configuration, and getting started with MCUs in the STM32CubeIDE.
+
 
 I'm sure if you are smart enough you can sit there like a stoic absorbing all these documents and then never ask for help again. 
 
@@ -94,6 +93,12 @@ And so we push forward, but these will come in handy as I build motivation to re
 - [STM Base Project](https://stm32-base.org/): They have a nice [Introduction to STM32](https://stm32-base.org/guides/getting-started) page with some introduction on the STM32 chip series, IDEs, and platforms you can use. It is not comprehensive, but I found it a useful start. They also have some getting started guides which I found useful - Tried a blinky example from them using VSCode, PlatformIO and a hardware abstration layer library for the board. The most difficult bug I encountered was a faulty USB cable, that tiny 10cm imposter cable stole a good 1 hour of my life. So if it builds but doesn't upload, try another cable.
 
 - [ST Microelectronics Wiki](https://wiki.st.com/stm32mcu/index.php?title=STM32StepByStep:Getting_started_with_STM32_:_STM32_step_by_step&oldid=10323):  I guess this is the official starting area for learning STM32, from the manufacturer resources themselves.
+
+# Languages 
+
+So embedded is typically C right? Well C++ seems to be growing which makes sense because you can compile C with a C++ compiler and memory is getting bigger on chips these days. There is also the 'new' kid on the block - Rust. I'm going to stick with C... for now, but Rust is very interesting and potentially the future, although the advice right seems to be that the Libraries for Rust are not quite there yet, so if you are keen with data sheets and building things from scratch maybe that's the way to go. Some people talk about micro Python and Java but I think I just threw up a bit in my mouth so need to go wash that out.
+
+Here's a list of embedded languages from [geekstogeeks](https://www.geeksforgeeks.org/embedded-systems-programming-languages/) from people who are probably much more worth listening to than me.
 
 # The fuzzy line between Bare Metal and Real Time Operating Systems (RTOS)
 
@@ -127,9 +132,7 @@ Some alternatives to ChibiOS:
 - [RTEMS](https://www.rtems.org/) - Open source, used by [ESA for safety-critical space applications](https://www.esa.int/Enabling_Support/Space_Engineering_Technology/Software_Systems_Engineering/RTEMS). This is probably not starter territory, if that needed to be said.
 
 # Conclusion
-This seems to be the basic landscape for getting started with embedded STM32 systems. From here I will get all the dependencies install, play around with some IDEs or use VIM, get a blinky going on the nucleo board, and then begin expanding on that.
-
-Copywrite © 2025 Skoopsy
+This seems to be the basic landscape for getting started with embedded STM32 systems. From here I will get all the dependencies installed, play around with some IDEs or use VIM, get a blinky going on the nucleo board, and then begin expanding on that.
 
 <script src="https://utteranc.es/client.js"
         repo="skoopsy/skoopsy.github.io"
@@ -139,3 +142,5 @@ Copywrite © 2025 Skoopsy
         crossorigin="anonymous"
         async>
 </script>
+
+Copywrite © 2025 Skoopsy
