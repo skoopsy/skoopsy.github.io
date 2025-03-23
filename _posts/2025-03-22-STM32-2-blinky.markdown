@@ -5,8 +5,14 @@ date:   2025-03-22 00:00:00 +0000
 categories: STM32
 ---
 
+Why bother with a blinky? To me the blinky example is there for you to test out various tool chains and enw systems, so as I test new tools or switch boards I might throw the blinky for them here, including the issues I run across...
+
 # Blinky on the Nucleo L152RE 
-I had this board lying around and it happend to be using a ARM Cortex M3 which is something I am interested in learning the architecture for. So I started with some basic guides from the [stm-base](https://stm32-base.org/guides/) project mentioned in the previous [post](https://skoopsy.dev/stm32/2025/03/14/STM32-1-getting-started.html).
+I had this board lying around and it happened to be using a ARM Cortex M3 which is something I am interested in learning the architecture for. So I started with some basic guides from the [stm-base](https://stm32-base.org/guides/) project mentioned in the previous [post](https://skoopsy.dev/stm32/2025/03/14/STM32-1-getting-started.html).
+
+## VSCode + PlatformIO
+To make the initial launch not too eye watering I decided to use an IDE ([VSCode](https://code.visualstudio.com/)) that I was familiar with and a nice extension ([PlatformIO IDE](https://docs.platformio.org/en/latest/integration/ide/vscode.html#installation)) which streamlines the pipeline needed to get code on to the board.
+
 
 
 

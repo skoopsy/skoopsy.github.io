@@ -49,6 +49,8 @@ Some examples of these are:
 
 - [ST Nucleo M-Bed L152RE](https://os.mbed.com/platforms/ST-Nucleo-L152RE/) - This IS an STM32 development board and uses the [ARM Cortex](https://en.wikipedia.org/wiki/ARM_architecture_family) architecture. It also comes with the ST-LINK/V2-1 debugger/programmer hardware attached. The ARM architecture is widely used in embedded IoT applications including some Laptops and Phones. **I will initially be using this board**.
 
+- [Black Pill](https://stm32-base.org/boards/STM32F103C8T6-Black-Pill) - This is based on a STM32F1 chip and is a great option if you are strapped for cash. You can pick these up from Aliexpress very cheaply, you will also need the ST-Link v2 USB adapter to be able to flash code and debug on it. If this interests you also check out it's more famous predecessor - the Blue Pill.
+
 # STM32
 
 To be clear; ST Microelectronics make chips and sell them. ARM "design" processing cores/SoCs and sell the intellectual properties to companies like ST Microelectronics (for now). So there are many flavours of ARM from different manufacturers.
