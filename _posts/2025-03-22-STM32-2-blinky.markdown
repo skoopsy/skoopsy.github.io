@@ -5,7 +5,75 @@ date:   2025-03-22 00:00:00 +0000
 categories: STM32
 ---
 
-Why bother with a blinky? To me the blinky example is there for you to test out various tool chains and enw systems, so as I test new tools or switch boards I might throw the blinky for them here, including the issues I run across...
+Why bother with a blinky? To me the blinky example is there for you to test out various toolchains, IDEs and boards. So as I test new tools or switch boards I might throw the blinky for them here, including the issues I run across...
+
+# Toolchains
+A toolchain is a set of software development tools that are integrated to build software for a specific architecture. Toolchains help automate and streamline converting source code into executable programs or in our case firmware. These often have tools for compiling, assembling, linking, and debugging code, and it is tailored for a specific environment such as embedded ARM systems.
+
+The main parts of a toolchain:
+
+- **Compiler**: Translate source code (C, C++) into machine code or intermediate code. Some popular examples are; GCC (GNU Compiler Collection), and Clang.
+
+- **Assembler**: Converts assembly language code into machine code for a specific architecture, for example; GNU Assembler (binutils)
+
+- **Linker**: It's in the name, it links object files from the compiler/assembler together into a single executable or firmware image. E.g: GNU Linker (ld).
+
+- **Debugger**: Help you debug code allowing you to step through execution, inspect variables, and find errors! E.g. GDB (GNU Debugger).
+
+- **Libraries**: Libraries for the specific architectures may often be bundled with a tool chain, along with some standard functionalities like math. E.g. Newlib.
+
+- **Build System**: This automates compiling and linking code, typically using a script or via tools like Make and CMake.
+
+## Arm Toolchains
+
+There are two main streams of toolchains for Arm from my understanding: The free open-source one, and the not free, not open-source ones.
+
+- [ARM GNU Toolchain](https://developer.arm.com/Tools%20and%20Software/GNU%20Toolchain) - This is the free open-source one
+- ARMCC: The proprietary one does not seem clearly labelled to me, it has a proprietary arm compiler with additional support for Fortran and Assembly.
+
+Arm seem to be going through a rebrand with their offerings and in April 2025 they will release everything under the naming [Arm Toolchain for Embedded](https://developer.arm.com/Tools%20and%20Software/Arm%20Toolchain%20for%20Embedded) which will consist of the following offerings:
+
+- **Arm Toolchain** - "Source and build scripts in a Github repo..."
+- **Arm Toolchain for Embedded** - "A pre-built and tested, free to use, 100% open source toolchain supported only by the open source community".
+- **Arm Toolchain for Embedded Professional** - "Functionally identical to Arm Toolchain for Embedded but with additional features for professional developers...".
+- **Arm Toolchain for Embedded FuSa** - "A safety-qualified toolchain for development of safety-related projects.". Expected 2026.
+
+It is not clear to me if the Arm Embedded Toolchain will replace the Arm GNU Toolchain, or if it is something else. For now we will stick with the free open-source ARM GNU Toolchain.
+
+Within these are different configurations depending on the context you are interested in, such as compiling for bare-metal embedded, or for a linux kernel.
+
+General naming conventions for the tool chains are: arch-vendor-os-eabi
+
+- **arch:** Architecture (ARM in our case!).
+- **vendor:** The toolchain supplier.
+- **os:** The target operating system (e.g. Linux on ARM).
+- **eabi:** Embedded Application Binary Interface.
+
+It's a little jumbled around for the toolchains we are interested in as you'll see below but I am interested in the bare-metal open source tool chain:
+
+**gcc-arm-none-eabi**: GNU based GCC, targets the ARM architecture, has no vendor, no target os (bare-metal), and complies with the ARM embedded application binary interface (EABI). Open-source and widely used for bare-metal programming for hobbyists and industry.
+
+I sometimes came across information referring to the now discontinued toolchain for arm embedded systems from the very similarly named [GNU Arm Embedded Toolchain](https://developer.arm.com/downloads/-/gnu-rm) (last release 2021) with file download naming conventions such as:
+
+- gcc-arm-none-eabi-...
+
+Whereas, the current (Q1 2025) [ARM GNU toolchain](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) is named with a prepended part to them, and a removed gcc before the architecture identifier, such as:
+- arm-gnu-toolchain-...x86_64_-arm-none-eabi.tar.xz
+
+Just a little thing that sent me down a rabbit hole.
+
+For a guide on installing the toolchain from arm themselves check [here](https://learn.arm.com/install-guides/gcc/arm-gnu/). I found the apt package for Ubuntu to be about 1 year out of date, but still went with it because I was too lazy to get the latests version from the Arm website, the guide shows you both ways on Linux, Mac, and Windows.
+
+# IDEs
+Arm Keil
+STM32CubIDE 
+PlatformIO IDE
+
+# Platforms
+Arm Mbed
+
+# Libraries
+CMSIS and HAL https://www.st.com/en/embedded-software/stm32cube-mcu-mpu-packages.html 
 
 # Blinky on the Nucleo L152RE 
 I had this board lying around and it happened to be using a ARM Cortex M3 which is something I am interested in learning the architecture for. So I started with some basic guides from the [stm-base](https://stm32-base.org/guides/) project mentioned in the previous [post](https://skoopsy.dev/stm32/2025/03/14/STM32-1-getting-started.html).
