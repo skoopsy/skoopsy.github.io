@@ -112,21 +112,90 @@ _"You could leave life right now. Let that determine what you do and say and thi
 
 And so we push forward, but these will come in handy as I build motivation to read them...
 
-# Some Starting Resources:
-
-- [STM Base Project](https://stm32-base.org/): They have a nice [Introduction to STM32](https://stm32-base.org/guides/getting-started) page with some introduction on the STM32 chip series, IDEs, and platforms you can use. It is not comprehensive, but I found it a useful start. They also have some getting started guides which I found useful - Tried a blinky example from them using VSCode, PlatformIO and a hardware abstraction layer library for the board. The most difficult bug I encountered was a faulty USB cable, that tiny 10cm imposter cable stole a good 1 hour of my life. So if it builds but doesn't upload, try another cable.
-
-- [ST Microelectronics Wiki](https://wiki.st.com/stm32mcu/index.php?title=STM32StepByStep:Getting_started_with_STM32_:_STM32_step_by_step&oldid=10323):  I guess this is the official starting area for learning STM32, from the manufacturer resources themselves.
-
 # Languages 
 
 So embedded is typically C right? Well C++ seems to be growing which makes sense because you can compile C with a C++ compiler and memory is getting bigger on chips these days. There is also the 'new' kid on the block - Rust. I'm going to stick with C... for now, but Rust is very interesting and potentially the future, although the advice right now seems to be that the Libraries for Rust are not quite there yet, so if you are keen with data sheets and building things from scratch; maybe that's the way to go. Some people talk about micro Python and Java but I think I just threw up a bit in my mouth so need to go wash that out.
 
 Whilst I'm cleaning out the sink here's a list of embedded languages from [geekstogeeks](https://www.geeksforgeeks.org/embedded-systems-programming-languages/).
 
-# The fuzzy line between Bare Metal and Real Time Operating Systems (RTOS)
+# Toolchains
+A toolchain is a set of software development tools that are integrated to build software for a specific architecture. Toolchains help automate and streamline converting source code into executable programs or in our case firmware. These often have tools for compiling, assembling, linking, and debugging code, and it is tailored for a specific environment such as embedded ARM systems.
 
-"Bare metal" is a pure form of interacting with the hardware, you are running instructions exactly as you ask, per clock cycle, in the order that you have told it - your code is running synchronously. You may use bare metal when you have too little resources to use an OS, or the task is so simple that the effort of setting up an OS is not worth it, or you just don't like the offerings out there for your application. 
+The main parts of a toolchain:
+
+- **Compiler**: Translate source code (C, C++) into machine code or intermediate code. Some popular examples are; GCC (GNU Compiler Collection), and Clang.
+
+- **Assembler**: Converts assembly language code into machine code for a specific architecture, for example; GNU Assembler (binutils)
+
+- **Linker**: It's in the name, it links object files from the compiler/assembler together into a single executable or firmware image. E.g: GNU Linker (ld).
+
+- **Debugger**: Help you debug code allowing you to step through execution, inspect variables, and find errors! E.g. GDB (GNU Debugger).
+
+- **Libraries**: Libraries for the specific architectures may often be bundled with a tool chain, along with some standard functionalities like math. E.g. Newlib.
+
+- **Build System**: This automates compiling and linking code, typically using a script or via tools like Make and CMake.
+
+## Arm Toolchains
+
+There are two main streams of toolchains for Arm from my understanding: The free open-source one, and the not free, not open-source ones.
+
+- [ARM GNU Toolchain](https://developer.arm.com/Tools%20and%20Software/GNU%20Toolchain) - This is the free open-source one
+- ARMCC: The proprietary one does not seem clearly labelled to me, it has a proprietary arm compiler with additional support for Fortran and Assembly.
+
+Arm seem to be going through a rebrand with their offerings and in April 2025 they will release everything under the naming [Arm Toolchain for Embedded](https://developer.arm.com/Tools%20and%20Software/Arm%20Toolchain%20for%20Embedded) which will consist of the following offerings:
+
+- **Arm Toolchain** - "Source and build scripts in a Github repo..."
+- **Arm Toolchain for Embedded** - "A pre-built and tested, free to use, 100% open source toolchain supported only by the open source community".
+- **Arm Toolchain for Embedded Professional** - "Functionally identical to Arm Toolchain for Embedded but with additional features for professional developers...".
+- **Arm Toolchain for Embedded FuSa** - "A safety-qualified toolchain for development of safety-related projects.". Expected 2026.
+
+It is not clear to me if the Arm Embedded Toolchain will replace the Arm GNU Toolchain, or if it is something else. For now we will stick with the free open-source ARM GNU Toolchain.
+
+Within these are different configurations depending on the context you are interested in, such as compiling for bare-metal embedded, or for a linux kernel.
+
+General naming conventions for the tool chains are: arch-vendor-os-eabi
+
+- **arch:** Architecture (ARM in our case!).
+- **vendor:** The toolchain supplier.
+- **os:** The target operating system (e.g. Linux on ARM).
+- **eabi:** Embedded Application Binary Interface. (A good explanation of ABI can be found [here](https://stackoverflow.com/questions/8060174/what-are-the-purposes-of-the-arm-abi-and-eabi).
+
+It's a little jumbled around for the toolchains we are interested in as you'll see below but I am interested in the bare-metal open source tool chain:
+
+**gcc-arm-none-eabi**: GNU based GCC, targets the ARM architecture, has no vendor, no target os (bare-metal), and complies with the ARM embedded application binary interface (EABI). Open-source and widely used for bare-metal programming for hobbyists and industry.
+
+I sometimes came across information referring to the now discontinued toolchain for arm embedded systems from the very similarly named [GNU Arm Embedded Toolchain](https://developer.arm.com/downloads/-/gnu-rm) (last release 2021) with file download naming conventions such as:
+
+- gcc-arm-none-eabi-...
+
+Whereas, the current (Q1 2025) [ARM GNU toolchain](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) is named with a prepended part to them, and a removed gcc before the architecture identifier, such as:
+- arm-gnu-toolchain-...x86_64_-arm-none-eabi.tar.xz
+
+Just a little thing that sent me down a rabbit hole.
+
+For a guide on installing the toolchain from arm themselves check [here](https://learn.arm.com/install-guides/gcc/arm-gnu/). I found the apt package for Ubuntu to be about 1 year out of date, but still went with it because I was too lazy to get the latests version from the Arm website, the guide shows you both ways on Linux, Mac, and Windows.
+
+# IDEs
+You could do everything in [Neoim](https://neovim.io/) if you wanted, but it might be easier whilst learning to use a system with pre-made automation tools to make the process a little smoother. The main IDEs that are mentioned for STM32 development are listed below:
+
+- [Arm Keil MDK v6](https://www.keil.arm.com/) - This is the official IDE suite from ARM, there is a [free non-commercial license](https://www.keil.arm.com/keil-mdk/#mdk-v6-editions) for it but it does not support all Arm chips or features. It does include support for some RTOS such as CMSIS library and FreeRTOS, along with providing some of the proprietary arm toolchains such as the Arm compiler and a debugger. Also has a [VSCode extension](https://marketplace.visualstudio.com/items?itemName=Arm.keil-studio-pack).
+
+- [STM32CubeIDE](https://www.st.com/en/development-tools/stm32cubeide.html) - The official IDE supplied by ST Microelectronics. It is based on Eclipse and uses the GNU arm tool chains, along with supporting the official ST Link debugger hardware. There is a bunch of support and packages with this. It seems like a great option to low the barrier to getting started with STM32 development.
+
+- [PlatformIO IDE](https://platformio.org/) - Free and Open-Source! They supply a standalone IDE and also an [extension for vscode](https://platformio.org/install/ide?install=vscode). This seems fully featured enough to try so I will be using it for my initial progress.
+
+- [Arm Mbed](https://os.mbed.com/) - Free and Open-source development platform - IDE and OS. However, this project is being [binned in 2026](https://os.mbed.com/blog/entry/Important-Update-on-Mbed/).
+
+# Libraries
+There are a bunch of libraries that can make life easier but it is always a balance between this and not having a clue what is actually going on at the bare-metal, along with having to check licenses of anything you grab. There are some main free libries of interest:
+
+- [Common Microcontroller Software Interface Standard (CMSIS)](https://www.arm.com/technologies/cmsis) is a [Hardware Abstraction Layer (HAL)](https://www.embedded.com/do-you-need-your-own-hardware-abstraction-layer-hal/) provided by Arm for free, under Apache 2.0 license, with the goal of creating some standardisation between vendors and arm chips to decouple the hardware from the higher level logic.
+
+- ST Microelectronics also provides their own [HAL](https://www.st.com/en/embedded-software/stm32cube-mcu-mpu-packages.html) along with some additional libraries.
+
+# The fuzzy line between Bare-Metal and Real Time Operating Systems (RTOS)
+
+"Bare-metal" is a pure form of interacting with the hardware, you are running instructions exactly as you ask, per clock cycle, in the order that you have told it - your code is running synchronously. You may only use bare-metal when you have too little resources to use an OS, or the task is so simple that the effort of setting up an OS is not worth it, or you just don't like the offerings out there for your application. Maybe you make your own "OS".
 
 An RTOS handles task scheduling, may have some form of memory management, and some hardware abstraction layer libraries - it's like bare metal but you have a library handling some of the complex and core functionality for you. In simple applications you might allocate all the memory at the beginning, but if you need to be more dynamic then an RTOS can manage this. You probably want things like task scheduling and memory management to have been figured out by smart mathematicians rather than tackling that yourself for complex projects. An RTOS can also provide higher levels of abstraction, which can be useful depending on your needs. 
 
@@ -152,8 +221,14 @@ Here are some notes I made when I tried to flash to hardware:
 Some alternatives to ChibiOS:
 
 - [FreeRTOS](https://www.freertos.org/) - Open Source, less abstracted than ChibiOS, commonly used in industry.
-- [Mbed Iot OS](https://os.mbed.com/) - Open Source, designed for IoT incl. a full open source development platform and IDE.
+- [Mbed Iot OS](https://os.mbed.com/) - Open Source, designed for IoT incl. a full open source development platform and IDE, will be depreciated fby Arm in 2026.
 - [RTEMS](https://www.rtems.org/) - Open source, used by [ESA for safety-critical space applications](https://www.esa.int/Enabling_Support/Space_Engineering_Technology/Software_Systems_Engineering/RTEMS). This is probably not starter territory, if that needed to be said.
+
+# Some Starting Resources:
+
+- [STM Base Project](https://stm32-base.org/): They have a nice [Introduction to STM32](https://stm32-base.org/guides/getting-started) page with some introduction on the STM32 chip series, IDEs, and platforms you can use. It is not comprehensive, but I found it a useful start. They also have some getting started guides which I found useful - Tried a blinky example from them using VSCode, PlatformIO and a hardware abstraction layer library for the board. The most difficult bug I encountered was a faulty USB cable, that tiny 10cm imposter cable stole a good 1 hour of my life. So if it builds but doesn't upload, try another cable.
+
+- [ST Microelectronics Wiki](https://wiki.st.com/stm32mcu/index.php?title=STM32StepByStep:Getting_started_with_STM32_:_STM32_step_by_step&oldid=10323):  I guess this is the official starting area for learning STM32, from the manufacturer resources themselves.
 
 # Conclusion
 This seems to be the basic landscape for getting started with embedded STM32 systems. From here I will get all the dependencies installed, play around with some IDEs or use VIM, get a blinky going on the Nucleo board, and then begin expanding on that.
