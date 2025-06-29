@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "STM32 #4: The interupt counter on Arm Cortex M with Libopencm3 & SysTick "
-date:   2025-06-30 23:03:00 +0000
+date:   2025-06-29 23:03:00 +0000
 categories: STM32
 ---
 

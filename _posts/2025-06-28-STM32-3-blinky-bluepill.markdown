@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "STM32 #3: From Template to Blinky - Building Bluepill Firmware with libopencm3"
-date:   2025-06-29 00:00:00 +0000
+date:   2025-06-28 00:00:00 +0000
 categories: STM32
 ---
 
