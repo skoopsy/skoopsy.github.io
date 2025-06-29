@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "STM32 #3 Bluepill STM32F1 Blinky with Neovim, CMake, and Openlibcm3"
+title:  "STM32 #3: From Template to Blinky - Building Bluepill Firmware with libopencm3"
 date:   2025-06-29 00:00:00 +0000
 categories: STM32
 ---
