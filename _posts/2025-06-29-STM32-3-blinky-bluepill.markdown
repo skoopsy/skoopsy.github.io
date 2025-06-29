@@ -9,7 +9,7 @@ So the Nucleo board is okay, but a little outdated and quite bulky. A much more 
 
 Here is a link to the SoC specs/documentation on the [ST Site](https://www.st.com/en/microcontrollers-microprocessors/stm32f103cb.html). It has a Cortex M3 processor rather than the Cortex M0 of the Nucleo board we used before. The common Bluepill comes with a chip ending in C8T6, where as I have the CBT6 version which comes with additional 64 MB of flash memory. Lastly, I managed to get a version with USB-C. Following long with a Bluepill or Bluepill plus will be almost identicle, jsut keep any eye on the pinouts.
 
-[Picture of board](/docs/assets/img/blog-03-4-bluepillplus.png)
+![Picture of board](/docs/assets/img/blog-03-4-bluepillplus.png)
 
 Here is a link to the ST Reference manual for the chip series: [RM0008](
 https://www.st.com/resource/en/reference_manual/rm0008-stm32f101xx-stm32f102xx-stm32f103xx-stm32f105xx-and-stm32f107xx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf)
@@ -25,7 +25,7 @@ Here is the pinout for the WeActStudio BluePill Plus, it is almost identicle the
 - If they uploaded the bootloader you may be able to use USB DFU out of the box
 
 For now the standard bluepill pinout will do, just noting the minor differences:
-[Picture of bluepill pinout](/docs/assets/blog-03-2-bluepill-plus-pinout)
+![Picture of bluepill pinout](/docs/assets/blog-03-2-bluepill-plus-pinout.png)
 
 # Connecting the board
 We will assume the need for an ST-LInk V2 here, although you may be able to get away with direct USB. Once your pin headers are soldered to the bluepill, hook up the ST-Link GND, SCK, DIO, and 3V3 pins to the SWD pins on the bluepill. 
