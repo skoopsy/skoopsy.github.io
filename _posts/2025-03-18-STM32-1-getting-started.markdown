@@ -5,13 +5,11 @@ date:   2025-03-14 00:00:00 +0000
 categories: STM32
 ---
 
-**Disclaimer: This is an account of my learning journey with embedded electronics and the STM32 - There will likely be mistakes, inefficiencies and bad approaches!.**
+Some of the stuff here may be wrong, and please feel free to let me know as I'm learning, and this is my account of it!
 
-Here I will log my journey trying to learn embedded electronics with the STM32 platform. My end goal is to build a smart watch, but I will set much more incremental, and achievable, goals along the path. Who knows if I'll get there but there will be a bunch of fun trying. Some of the stuff here may be wrong, and please feel free to let me know!
+Maybe you've completed some Arduino projects, a C/C++ course, or you've spent some time around a Hackerspace and became inspired by the awesome things being built around you, especially with with micro controllers! If you just want to quickly make a system which logs some sensor data somewhere, or performs a simple close-loop control system, and you aren't fussed about the inner workings then I suggest the Arduino ecosystem along with the Arduino IDE. For more in-depth interests I hope you find this amusing.
 
-Maybe you've completed some Arduino projects, a C/C++ course, or you've spent some time around a Hackerspace and became inspired by the awesome things being built around you, especially with with micro controllers! It's not my first rodeo, but I'm also far from a seasoned firmware or electrical engineer (full disclosure: I have an education in materials and printed electronics, but that was much more to do with moving electrons and atoms around, rather than flipping bits - Which is either a million miles away, or right next door depending on your background). If you just want to quickly make a system which logs some sensor data somewhere, or performs a simple close-loop control system, and you aren't fussed about the inner workings then I suggest the Arduino ecosystem along with the Arduino IDE. For more in-depth interests I hope you find this amusing.
-
-This post will be a brief overview of embedded systems along with introducing the development board I will use. Whilst I had some background in electronics I found the landscape vast when looking at where to begin with the STM32, so each section here fills out a question I had.
+This post will be a birds eye view of some of the key components of embedded systems from my best understanding, as many tutorials online follow one of the specific paths, often with little explanation of the context. Whilst I had some background in electronics I found the landscape vast when looking at where to begin with the STM32, so each section here fills out a question I had.
 
 # Embedded systems
 
@@ -176,13 +174,13 @@ Just a little thing that sent me down a rabbit hole.
 For a guide on installing the toolchain from arm themselves check [here](https://learn.arm.com/install-guides/gcc/arm-gnu/). I found the apt package for Ubuntu to be about 1 year out of date, but still went with it because I was too lazy to get the latests version from the Arm website, the guide shows you both ways on Linux, Mac, and Windows.
 
 # IDEs
-You could do everything in [Neoim](https://neovim.io/) if you wanted, but it might be easier whilst learning to use a system with pre-made automation tools to make the process a little smoother. The main IDEs that are mentioned for STM32 development are listed below:
+You could do everything in [Neovim](https://neovim.io/) if you wanted, but it might be easier whilst learning to use a system with pre-made automation tools to make the process a little smoother. The main IDEs that are mentioned for STM32 development are listed below:
 
 - [Arm Keil MDK v6](https://www.keil.arm.com/) - This is the official IDE suite from ARM, there is a [free non-commercial license](https://www.keil.arm.com/keil-mdk/#mdk-v6-editions) for it but it does not support all Arm chips or features. It does include support for some RTOS such as CMSIS library and FreeRTOS, along with providing some of the proprietary arm toolchains such as the Arm compiler and a debugger. Also has a [VSCode extension](https://marketplace.visualstudio.com/items?itemName=Arm.keil-studio-pack).
 
 - [STM32CubeIDE](https://www.st.com/en/development-tools/stm32cubeide.html) - The official IDE supplied by ST Microelectronics. It is based on Eclipse and uses the GNU arm tool chains, along with supporting the official ST Link debugger hardware. There is a bunch of support and packages with this. It seems like a great option to low the barrier to getting started with STM32 development.
 
-- [PlatformIO IDE](https://platformio.org/) - Free and Open-Source! They supply a standalone IDE and also an [extension for vscode](https://platformio.org/install/ide?install=vscode). This seems fully featured enough to try so I will be using it for my initial progress.
+- [PlatformIO IDE](https://platformio.org/) - Free and Open-Source! They supply a standalone IDE and also an [extension for vscode](https://platformio.org/install/ide?install=vscode). This seems fully featured and user friendly enough to to learn on, without having it do everything for you, so I will be using it for my initial progress.
 
 - [Arm Mbed](https://os.mbed.com/) - Free and Open-source development platform - IDE and OS. However, this project is being [binned in 2026](https://os.mbed.com/blog/entry/Important-Update-on-Mbed/).
 
@@ -220,8 +218,10 @@ Here are some notes I made when I tried to flash to hardware:
 
 Some alternatives to ChibiOS:
 
-- [FreeRTOS](https://www.freertos.org/) - Open Source, less abstracted than ChibiOS, commonly used in industry.
-- [Mbed Iot OS](https://os.mbed.com/) - Open Source, designed for IoT incl. a full open source development platform and IDE, will be depreciated fby Arm in 2026.
+- [FreeRTOS](https://www.freertos.org/) - Open Source, less abstracted than ChibiOS, commonly used in industry, I will try this out.
+
+- [Mbed Iot OS](https://os.mbed.com/) - Open Source, designed for IoT incl. a full open source development platform and IDE, will be depreciated by Arm in 2026.
+
 - [RTEMS](https://www.rtems.org/) - Open source, used by [ESA for safety-critical space applications](https://www.esa.int/Enabling_Support/Space_Engineering_Technology/Software_Systems_Engineering/RTEMS). This is probably not starter territory, if that needed to be said.
 
 # Some Starting Resources:
@@ -230,8 +230,20 @@ Some alternatives to ChibiOS:
 
 - [ST Microelectronics Wiki](https://wiki.st.com/stm32mcu/index.php?title=STM32StepByStep:Getting_started_with_STM32_:_STM32_step_by_step&oldid=10323):  I guess this is the official starting area for learning STM32, from the manufacturer resources themselves.
 
-# Conclusion
-This seems to be the basic landscape for getting started with embedded STM32 systems. From here I will get all the dependencies installed, play around with some IDEs or use VIM, get a blinky going on the Nucleo board, and then begin expanding on that.
+# Summary
+So there is the underlying architecture (e.g. Arm Cortex M0), the manufacturers who make and implement devices (e.g. ST with the STM32F0 series), development boards that house a system on chip with GPIO pins broken out, power circuitary, bootloaders, and all the caps/resistors/diodes placed so that you can get started with a SoC (e.g. STnucleo, or the Bluepill / Blackpill).
+
+Then we have the documentation to understand it all such as Dev Board data sheets, MCU Product Specification sheet, Reference Manual, Programming Manual, and Application notes.
+
+Then we have the "toolchains" which help you develop and get code running on the SoCs such as the; Compiler, Assembler, Linker, Debugger, build system, and libraries (E.g. CMake and ARM GNU Toolchain).
+
+IDEs /Editiors for writing code and automating toolchain use (e.g. PlatformIO in VSCode, or neovim for the raw approach)
+
+Libraries such as CMSIS, manufacturers flavoured HAL (e.g. ST HAL for their chips).
+
+Then real time operating system which are much like advanced libraries that handle a lot of the difficult timing, interup, and low level things (e.g. FreeRTOS)
+
+So now, lets try a blinky!
 
 <script src="https://utteranc.es/client.js"
         repo="skoopsy/skoopsy.github.io"
