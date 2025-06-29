@@ -21,11 +21,13 @@ Select the devices pane and search for "Nucleo L152RE", select the board and it 
 
 ### Setting up a project
 Within the Platform IO VScode extension navigate to the "Projects" pane and select "Create New Project", then input these options:
+
 - Your project name (I often put the SoC model in here for reference in the future)
 - Board: ST Nucleo L152RE (if this is not present scroll up and follow instructions for adding the board to PlatformIO)
 - Framework: STMCube (this is not my preference, but good for a first blinky as there are lots of resourced online for this implementation)
 
 Hit Finish.
+
 
 You are met with a bunch of directories under your new project in the explorer panel (usually on the left hand side):
 ![Directory structure](/docs/assets/img/blog-02-1-tester-1.png)
@@ -38,11 +40,11 @@ upload_protocol = stLink
 Now select the src directory and create a new file called main.c to write the blinky code in C.
 
 The first thing you need to specify is which STM32 HAL library you want to use, these are made by ST to work with their hardware, they link the SoC to the peripherals on the board such as GPIO pins.
-
 ```
 #include <stm32l1xx_hal.h>
 #include <stm32l1xx_hal_gpio.h>
 ```
+
 The first header file gives access to core functionality such as delay, system clock, and peripheral control, the second "...hal_gpio.h" gives access to functions to setup and toggle gpio pins for the board.
 
 Now we define the GPIO pin that the onboard LED is connected to, or which pin you have connected an external LED to.
@@ -110,7 +112,7 @@ int main(void) {
 }
 ```
 
-Now you are ready to click build (or Ctrl + Alt + B). If the code compiles, make sure you have the board connected via an STLink and hit upload or Ctrl + Alt + U. If it did not compile, double check the platformio.ini configuration, make sure the board and framework are set correctly, and here is the full code to double check:
+Click build to compile your code (or Ctrl + Alt + B). If the code compiles, make sure you have the board connected via an STLink and hit upload or Ctrl + Alt + U. If it did not compile, double check the platformio.ini configuration, make sure the board and framework are set correctly, and here is the full code to double check:
 
 ```
 #include <stm32l1xx_hal.h>
@@ -163,8 +165,6 @@ monitor_speed = 115200
 ```
 
 compile and upload that, then hit Ctrl + Alt + M to bring up a serial monito which can be useful for debugging.
-
-
 
 <script src="https://utteranc.es/client.js"
         repo="skoopsy/skoopsy.github.io"
