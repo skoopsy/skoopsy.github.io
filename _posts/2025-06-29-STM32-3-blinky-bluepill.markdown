@@ -203,7 +203,7 @@ You should now see the board blinking, if it is a bit too similar to the blinky 
 
 
 # Learning libopencm3
-The documentation is quite poor, nothing like the STM32 HAL, so the first port of call here is sniffing around the files inside libopencm3/include/libopencm3/stm32/ and f1/ to find the functions and registry level details.
+The [documentation](https://libopencm3.org/docs/latest/stm32f1/html/index.html) is quite poor, nothing like the STM32 HAL, so the first port of call here is sniffing around the files inside libopencm3/include/libopencm3/stm32/ and f1/ to find the functions and registry level details.
 
 Check out the RM0008 Reference Manual too from ST for the STM32F103 chip for GPIO registers, RCC setup, pin modes etc. Libopencm3 wraps these registers up into functions which are easier to use.
 
