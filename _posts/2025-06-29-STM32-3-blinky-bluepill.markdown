@@ -7,7 +7,7 @@ categories: STM32
 
 So the Nucleo board is okay, but a little outdated and quite bulky. A much more popular alternative amoungst the maker community are the Bluepill (and Blackpill) development boards, which can be picked up for next to nothing on aliexpress. They became popular becuase there was a variation that could be written to with the Arduino IDE in arduino style code which made them very accessible. I have decided to switch my learning to one of these flavour of boards, and will be trying to get slightly closer to the hardware by using libopencm3 rather than STM32 HAL, and so picked myself up a slightly modernised WeActStudio Bluepill Plus with a ST STM32F103CBT6 chip. It is very similar to the nucleo board but more powerful, smaller, cheaper, and more widely used. It is probably a counterfit/used chip considering the whole dev board was £2.09!
 
-Here is a link to the SoC specs/documentation on the [ST Site](https://www.st.com/en/microcontrollers-microprocessors/stm32f103cb.html). It has a Cortex M3 processor rather than the Cortex M0 of the Nucleo board we used before. The common Bluepill comes with a chip ending in C8T6, where as I have the CBT6 version which comes with additional 64 MB of flash memory. Lastly, I managed to get a version with USB-C. Following long with a Bluepill or Bluepill plus will be almost identicle, jsut keep any eye on the pinouts.
+Here is a link to the SoC specs/documentation on the [ST Site](https://www.st.com/en/microcontrollers-microprocessors/stm32f103cb.html). It has a Cortex M3 processor rather than the Cortex M0 of the Nucleo board we used before. The common Bluepill comes with a chip ending in C8T6, where as I have the CBT6 version which comes with additional 64 MB of flash memory. Lastly, I managed to get a version with USB-C. Following along with a Bluepill or Bluepill Plus will be almost identicle, just keep any eye on the pinouts.
 
 ![Picture of board](/docs/assets/img/blog-03-4-bluepillplus.png)
 
@@ -15,7 +15,7 @@ Here is a link to the ST Reference manual for the chip series: [RM0008](
 https://www.st.com/resource/en/reference_manual/rm0008-stm32f101xx-stm32f102xx-stm32f103xx-stm32f105xx-and-stm32f107xx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf)
 
 Here is the pinout for the WeActStudio BluePill Plus, it is almost identicle the a standard bluepill, with the following changes:
-- No jumpers, it uses buttons to select boot modes, Reset, and Boot0
+- No jumpers, it uses buttons to select boot modes; Reset, and Boot0
 - USB-C connector
 - User defined KEY button (Momentary NO connected to PA0)
 - Included a proper pull-up resistor for DFU
@@ -37,20 +37,20 @@ We will assume the need for an ST-LInk V2 here, although you may be able to get 
 *Side Note: DIO can also be configured to be GPIO PA13, and DCLK as GPIO PA14.*
 
 
-the 3.3v input will be regulated, and unless you can locate the voltage regulator datasheet 150mA is a safe bet as the maximum. The chip will draw 50mA max which leaves are 100mA of headroom if pwoered from the 3.3v regulator.
+The 3.3v input will be regulated, and unless you can locate the voltage regulator datasheet 150mA is a safe bet as the maximum. The chip will draw 50mA max which leaves 100mA of headroom if powered from the 3.3v regulator.
 
 Follow the one power source rule 3.3v in, 5v in, USB, pick one, not more!
 
-Power the board up and check the red/yellow power LED is lit up, a blink squence on the PB2 LED might start (linked to pin PC13)
+Power the board up and check the red/yellow power LED is lit up, a blink sequence on the PB2 LED might start (linked to pin PC13). Unplug the power.
 
-Now hook up your st link, if the board powers on, open a terminal install the [open source version of the st-link software](https://github.com/stlink-org/stlink), unless you have an official st-link device, and run:
+Now hook up your ST-LINK V2 emulator, if the board powers on; open a terminal and install the [open source version of the st-link software](https://github.com/stlink-org/stlink), unless you have an official st-link device, and run:
 ```
 st-info --probe
 ```
 
-If you are on windows I recommend using windows subsystem for linux for all this development, but if you must use windows the checkout the [Windows STM32 ST-Link Utility](https://www.st.com/en/development-tools/stsw-link004.html).
+If you are on Windows I recommend using windows subsystem for linux for all this development, but if you must use Windows the checkout the [Windows STM32 ST-Link Utility](https://www.st.com/en/development-tools/stsw-link004.html).
 
-If the board is not connectly correctly, the output may look like this:
+If the board is not connecting correctly, the output may look like this:
 ```
 Failed to enter SWD mode
 Found 0 stlink programmers
@@ -62,6 +62,7 @@ Found 0 stlink programmers
   dev-type:   unknown
 
 ```
+Double check the jumper cables between your ST-LINK V2 and the pins on the bluepin match up.
 
 If the board has been connected correctly you will recieve an output like this:
 
@@ -77,13 +78,13 @@ Found 1 stlink programmers
 
 Check the dev type is correct, here we have a STM32F1xx chip reported which is great, we can also see the board has 20K of SRAM and 128K of flash, yours may have 64K of flash if it is a C8T6 version.
 
-You can also read, write, and erase the flash memory directly with the st-link tools using st-flash command.
+You can also read, write, and erase the flash memory directly with the st-link tools using st-flash command, which we will touch on towards the end.
 
 # libopencm3
 
-[libopencm3](https://github.com/libopencm3/libopencm3/wiki) is a open source library for the ARM chips. For example this provides a nice API for accessing the GPIO pins.
+[libopencm3](https://github.com/libopencm3/libopencm3/wiki) is a open source hardware abstration library for the ARM chips. It is lower level than the STM32 HAL but not as unfriendly as bare metal. It seems like a greate scaleable platform with a very reasonable license. For example this provides a nice API for accessing the GPIO pins, dealing with tickers, and setting interupts.
 
-To build the library you will need to install an arm toolchain such as [gcc-arm-embedded](https://developer.arm.com/downloads/-/gnu-rm) which can also be done via apt in linux.
+To build the library you will need to install an arm toolchain such as [gcc-arm-embedded](https://developer.arm.com/downloads/-/gnu-rm) which can also be done via apt in linux. See my [Getting Started with Embedded](https://skoopsy.dev/stm32/2025/03/14/STM32-1-getting-started.html) post for an explanation of all the different ARM tool chains and where they fit in.
 
 Once the Arm toolchain is installed, head over to the libopencm3 github and follow the [setup wiki](https://github.com/libopencm3/libopencm3/wiki/Downloads), they have some important notes about keeping the current implementation of libopencm3 in your project dirs as it is under heavy development rather than installing a global one, and infact after some more reading they suggest using the [libopencm3-template git repo](https://github.com/libopencm3/libopencm3-template) to use libopencm3 in your own projects
 
@@ -97,9 +98,9 @@ After that, you will have a directory called 'project-name', cd into that and ru
 make -C libopencm3
 ```
 
-This will take a little bit of time, and only needs to be done once. This is a very modular template and can be used for many different boards
+This will take a little bit of time, and only needs to be done once. This is a very modular template and can be used for many different boards. You have just compiled libopencm3! It is all nicely contained within the libopencm3 directory, and already has the nessecary files and strucutre to link it to your project. This is adaptable for many chips, not only the STM32F1 series.
 
-cd into the my-project dir and you should find a Makefile, open that up in text editor of choice (neovim for me), the Makefile looks like this:
+If you hit a ls command you should see a few things in addition to the libopencm3 directory, cd into the my-project dir and you should find a Makefile, open that up in text editor of choice (neovim for me), the Makefile looks like this:
 
 ```
 PROJECT = awesomesauce
@@ -132,16 +133,15 @@ CFILES = main.c
 DEVICE=stm32f103cb
 OOCD_FILE = board/stm32f1x.cfg
 ```
-*Note: If you want to see the register level details take a look in libopencm3/include/libopencm3/stm32/f1*
 
-Write and quit that file, and create and open a new file called main.c, insdie here we will first call the main libopencm3 HAL for the board, and the HAL for accessing the GPIO pins:
+Write and quit that file, and create and open a new file called main.c, inside here we will first call the main libopencm3 HAL for the board, and the HAL for accessing the GPIO pins:
 
 ```c
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 ```
 
-Then we will run a very minial blinky loop, first lets take a look at where the onboard LED is, or you can use your own external one. On my board there is a silk screen print saying "PB2|" which suggests the LED is on GPIO group B, pin 2. The Cortex M chips do not activate all the GPIO pins by default to save power, they are grouped, and you must enable the group you want, along with enabling the clock, and selecting an appropriate clock speed:
+Then we will run a very minial blinky loop, first lets take a look at where the onboard LED is,or you can use your own external one. On my board there is a silk screen print saying "PB2" which suggests the LED is on GPIO group B, pin 2. The Cortex M chips do not activate all the GPIO pins by default to save power, they are grouped, and you must enable the group you want, along with enabling the clock, and selecting an appropriate clock speed:
 
 ```c
 int main(void) {
@@ -171,7 +171,7 @@ int main(void) {
 
 This loop uses the no-operation assembly instruction ```__asm__("nop")``` which literaly inserts a NOP into the compiled code, it is not efficient but gets the point across and will make the device blink, although it will not be able to do anything else in the mean time, a true delay.
 
-For clarity here is the full main.c file:
+For clarity, here is the full main.c file:
 ```c
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
@@ -190,7 +190,7 @@ int main(void) {
 
 Now save and quit out of the file, and run the ```make``` command.
 
-This will generate all the nessicary files to flash onto the device. If you make changes the main.c and Make does not recognise them, check in the Makefile that you have the correct filename for the CFILES parameter.
+This will generate all the necessary files to flash onto the device. If you make changes the main.c and Make does not recognise them, check in the Makefile that you have the correct filename for the CFILES parameter.
 
 Run an ls command in the terminal and you'll now see some new files in the directory, note blinky.bin, this is our program to flash onto the board.
 
@@ -205,7 +205,7 @@ You should now see the board blinking, if it is a bit too similar to the blinky 
 # Learning libopencm3
 The documentation is quite poor, nothing like the STM32 HAL, so the first port of call here is sniffing around the files inside libopencm3/include/libopencm3/stm32/ and f1/ to find the functions and registry level details.
 
-Check out the RM0008 Reference Manual too from ST for the STM32F103 chip for GPIO registers, RCC setup, pin modes etc, Libopencm3 wraps these registers up into functions which are easier to use.
+Check out the RM0008 Reference Manual too from ST for the STM32F103 chip for GPIO registers, RCC setup, pin modes etc. Libopencm3 wraps these registers up into functions which are easier to use.
 
 If you are trying to understand what a function does then running a grep for it is often the fastest way to find the details:
 
@@ -214,3 +214,13 @@ If you are trying to understand what a function does then running a grep for it 
 and finally make sure to checkout the [libopencm3 git](https://github.com/libopencm3/libopencm3)
 
 
+<script src="https://utteranc.es/client.js"
+        repo="skoopsy/skoopsy.github.io"
+        issue-term="pathname"
+        label="blog-embedded1"
+        theme="preferred-color-scheme"
+        crossorigin="anonymous"
+        async>
+</script>
+
+Copywrite © 2025 Skoopsy
