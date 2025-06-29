@@ -7,9 +7,10 @@ categories: STM32
 
 Some of the stuff here may be wrong, and please feel free to let me know as I'm learning, and this is my account of it!
 
-Maybe you've completed some Arduino projects, a C/C++ course, or you've spent some time around a Hackerspace and became inspired by the awesome things being built around you, especially with with micro controllers! If you just want to quickly make a system which logs some sensor data somewhere, or performs a simple close-loop control system, and you aren't fussed about the inner workings then I suggest the Arduino ecosystem along with the Arduino IDE. For more in-depth interests I hope you find this amusing.
+If you aren't fussed about the inner workings of the devices and just want to get some sensor outputs then I suggest the Arduino ecosystem along with the Arduino IDE. For more in-depth interests I hope you find this amusing.
 
 This post will be a birds eye view of some of the key components of embedded systems from my best understanding, as many tutorials online follow one of the specific paths, often with little explanation of the context. Whilst I had some background in electronics I found the landscape vast when looking at where to begin with the STM32, so each section here fills out a question I had.
+
 
 # Embedded systems
 
@@ -180,7 +181,7 @@ You could do everything in [Neovim](https://neovim.io/) if you wanted, but it mi
 
 - [STM32CubeIDE](https://www.st.com/en/development-tools/stm32cubeide.html) - The official IDE supplied by ST Microelectronics. It is based on Eclipse and uses the GNU arm tool chains, along with supporting the official ST Link debugger hardware. There is a bunch of support and packages with this. It seems like a great option to low the barrier to getting started with STM32 development.
 
-- [PlatformIO IDE](https://platformio.org/) - Free and Open-Source! They supply a standalone IDE and also an [extension for vscode](https://platformio.org/install/ide?install=vscode). This seems fully featured and user friendly enough to to learn on, without having it do everything for you, so I will be using it for my initial progress.
+- [PlatformIO IDE](https://platformio.org/) - Free and Open-Source! They supply a standalone IDE and also an [extension for vscode](https://platformio.org/install/ide?install=vscode). This seems fully featured enough to try so I will be using it for my initial progress.
 
 - [Arm Mbed](https://os.mbed.com/) - Free and Open-source development platform - IDE and OS. However, this project is being [binned in 2026](https://os.mbed.com/blog/entry/Important-Update-on-Mbed/).
 
@@ -230,6 +231,7 @@ Some alternatives to ChibiOS:
 
 - [ST Microelectronics Wiki](https://wiki.st.com/stm32mcu/index.php?title=STM32StepByStep:Getting_started_with_STM32_:_STM32_step_by_step&oldid=10323):  I guess this is the official starting area for learning STM32, from the manufacturer resources themselves.
 
+
 # Summary
 So there is the underlying architecture (e.g. Arm Cortex M0), the manufacturers who make and implement devices (e.g. ST with the STM32F0 series), development boards that house a system on chip with GPIO pins broken out, power circuitary, bootloaders, and all the caps/resistors/diodes placed so that you can get started with a SoC (e.g. STnucleo, or the Bluepill / Blackpill).
 
@@ -244,6 +246,7 @@ Libraries such as CMSIS, manufacturers flavoured HAL (e.g. ST HAL for their chip
 Then real time operating system which are much like advanced libraries that handle a lot of the difficult timing, interup, and low level things (e.g. FreeRTOS)
 
 So now, lets try a blinky!
+
 
 <script src="https://utteranc.es/client.js"
         repo="skoopsy/skoopsy.github.io"
