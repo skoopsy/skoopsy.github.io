@@ -134,7 +134,11 @@ DEVICE=stm32f103cb
 OOCD_FILE = board/stm32f1x.cfg
 ```
 
-Write and quit that file, and create and open a new file called main.c, inside here we will first call the main libopencm3 HAL for the board, and the HAL for accessing the GPIO pins:
+Write and quit that file.
+
+# Blinky
+
+Create and open a new file called main.c, inside here we will first call the main libopencm3 HAL for the board, and the HAL for accessing the GPIO pins:
 
 ```c
 #include <libopencm3/stm32/rcc.h>
