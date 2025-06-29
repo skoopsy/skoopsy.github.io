@@ -5,9 +5,9 @@ date:   2025-06-29 00:00:00 +0000
 categories: STM32
 ---
 
-So the Nucleo board is okay, but a little outdated and quite bulky. A much more popular alternative amoungst the maker community was the Bluepill (and Blackpill) development boards, which can be picked up for next to nothing on aliexpress. I have decided to switch my learning to one of these flavour of boards, and so picked myself up a slightly modernised WeActStudio Bluepill Plus with a ST STM32F103CBT6 chip. It is very similar to the nucleo board but more powerful, smaller, cheaper, and more widely used. It is probably a counterfit/used chip considering the whole dev board was £1.23.
+So the Nucleo board is okay, but a little outdated and quite bulky. A much more popular alternative amoungst the maker community are the Bluepill (and Blackpill) development boards, which can be picked up for next to nothing on aliexpress. They became popular becuase there was a variation that could be written to with the Arduino IDE in arduino style code which made them very accessible. I have decided to switch my learning to one of these flavour of boards, and will be trying to get slightly closer to the hardware by using libopencm3 rather than STM32 HAL, and so picked myself up a slightly modernised WeActStudio Bluepill Plus with a ST STM32F103CBT6 chip. It is very similar to the nucleo board but more powerful, smaller, cheaper, and more widely used. It is probably a counterfit/used chip considering the whole dev board was £2.09!
 
-Here is a link to the SoC specs/documentation on the [ST Site](https://www.st.com/en/microcontrollers-microprocessors/stm32f103cb.html). It has a Cortex M3 processor rather than the Coretex M0 of the Nucleo board we used before. The common Bluepill comes with a chip ending in C8T6, where as I have the CBT6 version which comes with additional 64 MB of flash memory. Lastly, I managed to get a version with USB-C. Following long with a Bluepill or Bluepill plus will be almost identicle, jsut keep any eye on the pinouts.
+Here is a link to the SoC specs/documentation on the [ST Site](https://www.st.com/en/microcontrollers-microprocessors/stm32f103cb.html). It has a Cortex M3 processor rather than the Cortex M0 of the Nucleo board we used before. The common Bluepill comes with a chip ending in C8T6, where as I have the CBT6 version which comes with additional 64 MB of flash memory. Lastly, I managed to get a version with USB-C. Following long with a Bluepill or Bluepill plus will be almost identicle, jsut keep any eye on the pinouts.
 
 [Picture of board](/docs/assets/img/blog-03-4-bluepillplus.png)
 
@@ -203,6 +203,14 @@ You should now see the board blinking, if it is a bit too similar to the blinky 
 
 
 # Learning libopencm3
-The documentation is quite poor, nothing like the STM32 HAL, so the first port of call here is sniffing around the files inside libopencm3/include/libopencm3/stm32/f1/ to find the functions and registry level details.
+The documentation is quite poor, nothing like the STM32 HAL, so the first port of call here is sniffing around the files inside libopencm3/include/libopencm3/stm32/ and f1/ to find the functions and registry level details.
 
 Check out the RM0008 Reference Manual too from ST for the STM32F103 chip for GPIO registers, RCC setup, pin modes etc, Libopencm3 wraps these registers up into functions which are easier to use.
+
+If you are trying to understand what a function does then running a grep for it is often the fastest way to find the details:
+
+```grep -R gpio_toggle libopencm3/include```
+
+and finally make sure to checkout the [libopencm3 git](https://github.com/libopencm3/libopencm3)
+
+
