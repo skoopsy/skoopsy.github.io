@@ -1,9 +1,10 @@
 ---
 layout: post
 title:  "STM32 #3: From Template to Blinky - Building Bluepill Firmware with libopencm3"
-date:   2025-06-29 00:00:00 +0000
+date:   2025-06-28 00:00:00 +0000
 categories: STM32
 ---
+Board: WeActStudio BluePill Plus STM32 F103CBT8 (Arm Coretex M3)
 
 So the Nucleo board is okay, but a little outdated and quite bulky. A much more popular alternative amoungst the maker community are the Bluepill (and Blackpill) development boards, which can be picked up for next to nothing on aliexpress. They became popular becuase there was a variation that could be written to with the Arduino IDE in arduino style code which made them very accessible. I have decided to switch my learning to one of these flavour of boards, and will be trying to get slightly closer to the hardware by using libopencm3 rather than STM32 HAL, and so picked myself up a slightly modernised WeActStudio Bluepill Plus with a ST STM32F103CBT6 chip. It is very similar to the nucleo board but more powerful, smaller, cheaper, and more widely used. It is probably a counterfit/used chip considering the whole dev board was £2.09!
 
@@ -134,7 +135,11 @@ DEVICE=stm32f103cb
 OOCD_FILE = board/stm32f1x.cfg
 ```
 
-Write and quit that file, and create and open a new file called main.c, inside here we will first call the main libopencm3 HAL for the board, and the HAL for accessing the GPIO pins:
+Write and quit that file.
+
+# Blinky
+
+Create and open a new file called main.c, inside here we will first call the main libopencm3 HAL for the board, and the HAL for accessing the GPIO pins:
 
 ```c
 #include <libopencm3/stm32/rcc.h>

@@ -1,9 +1,10 @@
 ---
 layout: post
 title:  "STM32 #4: The interupt counter on Arm Cortex M with Libopencm3 & SysTick "
-date:   2025-06-30 23:03:00 +0000
-categories: STM32
+date:   2025-06-29 23:03:00 +0000
+categories: STM32, Libopencm3, Bluepill
 ---
+Board: WeActStudio BluePill Plus STM32 F103CBT8 (Arm Coretex M3)
 
 In this post we will progress from using the assembler code __asm__("nop") to using a interrupt based delay via the libopencm3 library on the Bluepill STM32F1 board. See [STM32: From Template to Blinky - Building Bluepill Firmware with libopencm3](https://skoopsy.dev/stm32/2025/06/29/STM32-3-blinky-bluepill.html) for how to get a blinky running with libopencm3 on a bluepill using make. However, this code should work for any of the chips supported by libopencm3.
 
