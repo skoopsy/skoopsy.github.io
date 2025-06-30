@@ -70,7 +70,7 @@ Openlibcm3 provides a HAL in libopencm3/includes/libopencm3/cm3/systick.h which 
 
 The [libopencm3 docs for systick](https://libopencm3.org/docs/latest/stm32f1/html/group__CM3__systick__file.html#ga2604630453d0b6b35601375d0ee7e4a0)
 
-So lets mkae a slighly more professional version of our blinky which uses a timer rather than raw clock cycles.
+So lets make a slighly more professional version of our blinky which uses a timer rather than raw clock cycles.
 
 ```c
 #include <libopencm3/stm32/rcc.h>
@@ -83,13 +83,13 @@ So lets mkae a slighly more professional version of our blinky which uses a time
 #define LED_PIN GPIO2 // same with the pin
 ```
 
-Now lets create a 32bit usinged int to hold a millisecond value we will count from system startup, about 49 days worth of counting before resetting. It's important to set this as voltaile as it will be modified by sus_tick_handler(), not inside main(). Without volatile declaration the compiler might opimise out reads/writes thinking the value is unused:
+Create a 32bit unsigned int to hold a millisecond value that will count from system startup, about 49 days worth of counting before resetting. It's important to set this as voltaile as it will be modified by sus_tick_handler(), not inside main(). Without volatile declaration the compiler might opimise out reads/writes thinking the value is unused:
 
 ```c
 static volatile uint32_t system_millis = 0;
 ```
 
-Now lets write a small handler for the interups from systick to increment the system_millis value:
+Write a small handler for the interups from systick to increment the system_millis value:
 
 ```c
 void sys_tick_handler(void){
@@ -97,7 +97,7 @@ void sys_tick_handler(void){
 }
 ```
 
-Let's create a sleep function, this is a "busy-waiting" approach and so blocks the CPU from doing anything else whilst the delay occurs, although ISRs still run so it can respond to interrupts.
+Create a sleep function, this is a "busy-waiting" approach and so blocks the CPU from doing anything else whilst the delay occurs, although ISRs still run so it can respond to interrupts.
 
 ```
 void msleep(uint32_t ms) {
@@ -106,7 +106,7 @@ void msleep(uint32_t ms) {
 }
 ```
 
-Now we need to setup SysTick to interupt every 1ms, in our case we have a 72Mhz system clock
+Setup SysTick to interupt every 1ms, in our case we have a 72Mhz system clock
 
 ```
 void systick_setup(void) {
@@ -130,7 +130,7 @@ void gpio_setup(void) {
 }
 ```
 
-Make sure the system clock is set to 72 MHz
+Make sure the system clock is set to 72 MHz, here we will use the extrnal clock for some unnessicary accuracy. To learn more about all the different clock sources available on the STM32 chips take a look [here](https://community.st.com/t5/stm32-mcus/part-1-introduction-to-the-stm32-microcontroller-clock-system/ta-p/605369). It's also worth looking at the STM32 manual RM008 and searching for "Clock tree", "HSI clock", "HSE clock".
 
 ```
 void clock_setup(void) {
@@ -139,7 +139,7 @@ void clock_setup(void) {
 
 ```
 
-Our main loop is now very clean an maintainable:
+Our main loop is now fairly clean:
 
 ```
 int main(void) {
@@ -154,7 +154,7 @@ int main(void) {
 }
 ```
 
-Now make sure to go back to the top of the file and declare your function protoypes so that the compiler does not compain:
+Make sure to go back to the top of the file and declare your function protoypes so that the compiler does not complain:
 
 ```
 void systick_setup(void);
@@ -163,7 +163,7 @@ void clock_setup(void);
 void msleep(uint32_t ms);
 void sys_tick_handler(void);
 ```
-Alternatively you could delcare your functions as static and it would also chill out.
+Alternatively you could declare your functions as static and it would also chill out.
 
 
 Save and quit the file, run make, and flash that bad boi using an ST-LINK V2 with:
@@ -173,7 +173,7 @@ st-flash write blinky.bin 0x8000000
 
 A nice slow blinking appears, and the beast becomes calm.
 
-You now have a fairly approach using thin layers from Libopencm3 for precise control of your hardware to make a silly led blink. The timing should be fairly precise with this method, but we have implemented a blocking function so the CPU is held up whilst waiting on the delay. In the next post we'll cover a Non-blocking version.
+This is a fairly simply approach using Libopencm3 for precise control of your hardware to make a silly led blink. The timing should be fairly precise with this method, but we have implemented a blocking function so the CPU is held up whilst waiting on the delay. The next post will cover a non-blocking version.
 
 Incase you messed up; here's the full main.c file:
 ```c
