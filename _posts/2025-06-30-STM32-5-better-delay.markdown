@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "STM32 #5: Non-Blocking delay blinky with Bluepill, Libopencm3, and WFI"
-date:   2025-06-30 23:00:00 +0000
+date:   2025-06-30 20:00:00 +0000
 categories: STM32
 ---
 Board: WeActStudio BluePill Plus STM32 F103CBT8 (Arm Coretex M3)
