@@ -6,9 +6,9 @@ categories: STM32
 ---
 Board: WeActStudio BluePill Plus STM32 F103CBT8 (Arm Coretex M3)
 
-So the last post we used Systick to create a timer and then use that timer to create a delay in the code. The delay function developed msleep() made the main loop hang around in a while loop until the delay was over. This would be considered a blocking function as it stops main from doing anything else while it waits for the delay, but we have loads of processing power, you might want to do some UART communication, sensor reading or other stuff, so lets make it better.
+The [last post](https://skoopsy.dev/stm32,/libopencm3,/bluepill/2025/06/29/STM32-4-bluepill-delay.html) employed Systick to create a timer, and then used that timer to create a delay in the code. The delay function developed, msleep(), caused the main loop to hang around in a while loop, until the delay was over. This is considered a blocking function - it stops main from doing anything else while it waits for the delay. There is a lot of processing pwoer on the F103CBT8 and you might want to do some UART communication, sensor reading, or other stuff, so lets make it better.
 
-These lines code are mostly unchanged from the previous post minus the removal of the msleep function and some moving around:
+These lines of code are mostly unchanged from the previous post, minus the removal of the ```msleep()``` function and some reshuffling:
 
 ```c
 #include <libopencm3/stm32/rcc.h>
@@ -60,9 +60,9 @@ void clock_setup(void) {
 }
 ```
 
-We are going to build a function that combines the delay and the toggling of the LED in a non-blocking manner packaged neatly and specifically for blinking the led.
+We are going to build a function that implements the delay, and the toggling of the LED, in a non-blocking manner, packaged neatly and specifically for blinking the led.
 
-First at the top of the file, after decalring the system_millis variable, let us delare a new struct that can hold information on the led blink:
+At the top of the file, after decalring the ```system_millis``` variable, lets create some organisation by delaring a new struct that can hold information on the led blink parameters:
 
 ```c
 // define some variables for led blink
@@ -75,14 +75,15 @@ typedef struct {
 ```
 
 Now add the following function to perform the blink using keys from the struct:
-- First we setup the function with a pointer b to a blink_t structure, passing it's address, and setup a variable to hold the current counter value.
-- Access the "last_toggle" key in the structed pointed to by b by using the ->.
-- Calculate how much time has passed since last toggle
-- Check if the elapsed time is greater than or equal to the blinking interval set
-- If it is then toggle the led.
-- Update last_toggle to the current time to restart the count.
 
-```
+- First we setup the function with a pointer ```b``` to a ```blink_t``` structure, passing it's address, and setup a variable to hold the current counter value.
+- Access the ```last_toggle``` key in the structure pointed to by ```b``` by using the ->.
+- Calculate how much time has passed since last toggle
+- Check if the elapsed time is greater than, or equal to, the blinking interval set
+- If it is: toggle the led.
+- Update ```last_toggle``` to the current time to restart the count.
+
+```c
 // Toggle the led blink frequency
 void blink_ticker(blink_t *b, uint32_t now) {
 	if ((now - b->last_toggle) >= b->interval_ms) {
@@ -119,12 +120,12 @@ int main(void) {
 }
 ```
 
-Save and quit, then run ```st-flash write blinky.bin 0x8000000``` via the ST-LINK V2 plugged into the bluepill and you should now have an even slower blinky, oooo.
+Save, quit, then run ```st-flash write blinky.bin 0x8000000``` via the ST-LINK V2 plugged into the bluepill, and you should now have an even slower blinky!
 
-Now what if you wanted to add another LED and have it blinking to a different beat? Well thats easy, you can define a second blink_t structure and run the blink_ticker function with that structure in the main loop!
+What if you wanted to add another LED and have it blinking to a different beat? Well thats easy, you can define a second blink_t structure and run the blink_ticker function with that structure in the main loop!
 
-Incase you messed up, or my explanation was poor... here's the main.c file in full:
-```
+Incase you messed up, or my explanation was poor... here's the ```main.c``` file in full:
+```c
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/cm3/systick.h>
@@ -216,11 +217,11 @@ int main(void) {
 
 # Interrupt based approach
 
-The apporach taken above is a bit of a cop out though isn't it, it's a sort of wait until timestamp, and check later. It can still be impacted by other things happening in the loop. So we could try a Interrupt Service Routine (ISR) which is ran outside of the main loop, freeing it up to do more useful things.
+The code above is a bit of a cop out though isn't it, it's a sort of "wait until timestamp, and check later" approach. It can be impacted by other things happening in the loop. So we could try a [Interrupt Service Routine](https://en.wikipedia.org/wiki/Interrupt) (ISR) which is ran outside of the main loop, freeing it up to do more useful things.
 
-We will achieve this by letting the SysTick interrupt handle the LED toggling directly every N milliseconds, this is hardware driven, so it doesn't rely on software polling so will be less disruptive to our main loop.
+We will achieve this by letting the SysTick interrupt handle the LED toggling directly, every N milliseconds. The intetrupt is hardware driven, it doesn't rely on software polling, so it will be less disruptive to our main loop.
 
-First we will modify the sys_tick_handler to increment a slightly more appropriately named variable, then have a conditonal statement to run toggle the LED if the timer is at 500ms:
+First, modify the ```sys_tick_handler``` to increment a slightly more appropriately named variable, then create a conditonal statement to toggle the LED if the timer is at the blink interval:
 
 ```c
 static volatile uint32_t blink_timer = 0;
@@ -240,9 +241,9 @@ void sys_tick_handler(void) {
     }
 }
 ```
-I have tweaked the blink_t structure slightly, by removing the now defunct last_toggle so you will have to go back and modify the prototype to match.
+I have tweaked the blink_t structure slightly, by removing the now defunct last_toggle so you will have to go back and modify the declaration to match.
 
-This will now increment the blink_timer variable everytime the Systick interrupt fires, which is based on the systick_setup function we defined before:
+The blink_timer variable will be incremented everytime the Systick interrupt fires, which is based on the ```systick_setup()``` function defined before:
 
 ```c
 // Setup SysTick to interrupt every 1 ms
@@ -255,7 +256,7 @@ void systick_setup(void) {
 }
 ```
 
-Now the main loop simply loses the old delay logic:
+The main loop simply loses the old delay logic:
 
 ```c
 // Main
@@ -269,7 +270,7 @@ int main(void) {
 	};
 ```
 
-Now ```st-flash write blinky.bin 0x8000000``` with the ST-LINK V2 and it should now be a 0.5 Hz blink.
+Now ```st-flash write blinky.bin 0x8000000``` with the ST-LINK V2 and there should be a 2 Hz blink.
 
 Here is the full code, as the explaination of this one required a bit more chopping and changing:
 
@@ -350,9 +351,9 @@ int main(void) {
 ```
 
 # A very low power approach (WFI)
-Considering that we aren't doing anything in the main loop and using a SIR to toggle the led we could save some power by making the device go sleep until an interrupt wakes it.
+Considering that we aren't doing anything in the main loop, and using a SIR to toggle the led, we could save some power by making the device go sleep until an interrupt wakes it.
 
-Depending on the compiler you are using you can access this functionality directly via the assembly command wfi (wait for interrupt) which is built into most ARM Cortex M chips. This halts the CPU clock between interrupts, reducing the pwoer consumption of the chip.
+Depending on the compiler you are using; you can access this functionality directly via the assembly command wfi (wait for interrupt) which is built into most ARM Cortex M chips. This halts the CPU clock between interrupts, reducing the pwoer consumption of the chip.
 
 All we have to do is add it to the while loop in our main loop, here is the new main loop:
 
@@ -370,7 +371,7 @@ int main(void) {
 ```
 Save, quit, then ```st-flash write blinky.bin 0x8000000``` and your done... 
 
-Sorry about that one, it's a bit anticlimactic isn't it, nothing externally happens, but you hope a little less power is being used momentarily between systick interrupts. You could put a multimeter on the 3.3v line and you might see a difference if you slow the systick interrupt timer down, as it currently will sleep between each 1ms interrupt before waking up to incremenet the blink timer.
+Sorry about that one, it's a bit anticlimactic isn't it, nothing externally happens, but you hope a little less power is being used momentarily between systick interrupts. You could put a multimeter on the 3.3v line and you might see a difference if you slow the systick interrupt timer down, as it will sleep between each 1ms interrupt before waking up to incremenet the blink timer.
 
 <script src="https://utteranc.es/client.js"
         repo="skoopsy/skoopsy.github.io"
