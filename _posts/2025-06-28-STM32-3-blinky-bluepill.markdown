@@ -91,17 +91,20 @@ Once the Arm toolchain is installed, head over to the libopencm3 github and foll
 
 For me, that means creating a new directory and running a git clone inside it:
 ```
-git clone --recurse-submodules git@github.com:libopencm3/libopencm3-template.git project-name
+git clone --recurse-submodules git@github.com:libopencm3/libopencm3-template.git blinky-cbt6
 ```
-After that, you will have a directory called 'project-name', cd into that and run the command:
 
-```
+The reason for adding it as a git submodule is that git will differentiate the library from your project so merging library updates / modifications you make to the library will be easier later on. Libopencm3 recommend adding the library as a submodule to each project as the lirbrary is still in flux and so installing globally is not recommended.
+
+cd inside the new blinky-cbt6 directory and you can compile libopencm3 with:
+
+```zsh
 make -C libopencm3
 ```
 
 This will take a little bit of time, and only needs to be done once. This is a very modular template and can be used for many different boards. You have just compiled libopencm3! It is all nicely contained within the libopencm3 directory, and already has the nessecary files and strucutre to link it to your project. This is adaptable for many chips, not only the STM32F1 series.
 
-If you hit a ls command you should see a few things in addition to the libopencm3 directory, cd into the my-project dir and you should find a Makefile, open that up in text editor of choice (neovim for me), the Makefile looks like this:
+Inside blinky-cbt6 if you run a "ls" command you should see a few things in addition to the libopencm3 directory, cd into the my-project dir and you should find a Makefile, open that up in text editor of choice (neovim for me), the Makefile looks like this:
 
 ```
 PROJECT = awesomesauce
@@ -139,7 +142,7 @@ Write and quit that file.
 
 # Blinky
 
-Create and open a new file called main.c, inside here we will first call the main libopencm3 HAL for the board, and the HAL for accessing the GPIO pins:
+Within the my-project directory create and open a new file called main.c, inside here we will first call the main libopencm3 HAL for the board, and the HAL for accessing the GPIO pins:
 
 ```c
 #include <libopencm3/stm32/rcc.h>
@@ -153,7 +156,7 @@ int main(void) {
 
     // Enable the clock for GPIO port B via RCC (Reset & Clock control)
     // This is defined in the libopencm3/stm32/rcc.h file
-    rcc_perip_clock_enable(RCC_GPIOB)
+    rcc_periph_clock_enable(RCC_GPIOB);
 
     // Set the PB2 pin as an output pin, in push-pull mode, using the 2 MHz clock
     // This is defined in the libopencm3/stm32/gpio.h file
@@ -161,7 +164,7 @@ int main(void) {
                   GPIO_MODE_OUTPUT_2_MHZ, // The output singla clock (alternatives: 10 & 50 Mhz)
                   GPIO_CNF_OUTPUT_PUSHPULL, // Sets the pin as a push-pull output
                   GPIO2 // The pin to set on the GPIO port.
-                  )
+                  );
 
     // Blink loop
     while(1) {
