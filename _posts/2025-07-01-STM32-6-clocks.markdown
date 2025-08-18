@@ -9,7 +9,35 @@ In the last few posts we have used a specific clock in our clock_setup() functio
 RCC_CLOCK_HSE8_72MHZ
 ```
 
+# Timer basics
 
+A timer is a hardware peripheral that counts clock cycles. These can be used to egenrate an event (e.g. update, compare, overflow), trigger an interrupt, toggle pins (e.g. PWM, output compare), or synchronise with other peripherals (e.g. ADC, DMA).
+
+Timer has the following components:
+- Counter register (CNT): Holds the current timer value
+
+- Prescaler (PSC): Divides the input clock to slow down counting, you probably don't need to count every 13.89 nanoseconds - ther period of a 72Mhz signal.
+    Rather you might set the prescaler to 71, then the tiemr will tick at 1 MHz = 1us per tick.
+
+- Auto-reload register (ARR): Defines the reset point of the counter resets (overflow). Setting ARR = 999 with 1MHz tick will produce a timer period = 1000 us = 1 ms.
+
+- Compare registers (CCR1-CCRx): Used to trigger events when CNT matches these values.
+
+The timer takes a clock source (APB1 or APB2 bus), then divivdes the clock by the prescaler, and incremenets the counter every tick. When the counter > ARR, it resets to 0 and fenerates an update event. So you can control the timing with the prescaler and auto-reload registers.
+
+# Interrupts
+
+Interrupts are handled via the Interrupt Service Routine (ISR).
+
+Timers can trigger an interrupt via:
+- Update event (overflow)
+- Compare match (CNT == CCRx)
+- Trigger event (This is part of the "advanced" timers)
+
+
+A BIT ON INTERRUPTS HERE MIGHT BE USEFUL
+
+A BIT ON POINTERS TO REGISTERS TOO as this will be needed to setup the timers.
 
 
 <script src="https://utteranc.es/client.js"

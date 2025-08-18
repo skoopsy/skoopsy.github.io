@@ -15,12 +15,12 @@ int main(void) {
 
     // Enable the clock for GPIO port B via RCC (Reset & Clock control)
     // This is defined in the libopencm3/stm32/rcc.h file
-    rcc_perip_clock_enable(RCC_GPIOB)
+    rcc_periph_clock_enable(RCC_GPIOB);
 
     // Set the PB2 pin as an output pin, in push-pull mode, using the 2 MHz clock
     // This is defined in the libopencm3/stm32/gpio.h file
     gpio_set_mode(GPIOB, // Which GPIO port to target
-                  GPIO_MODE_OUTPUT_2_MHZ, // The output singla clock (alternatives: 10 & 50 Mhz)
+                  GPIO_MODE_OUTPUT_2_MHZ, // The output singla clock (alternatives: 10 & 50 Mhz);
                   GPIO_CNF_OUTPUT_PUSHPULL, // Sets the pin as a push-pull output
                   GPIO2 // The pin to set on the GPIO port.
                   )
@@ -37,7 +37,7 @@ int main(void) {
 ```
 
 # SysTick
-Rather than using a the assembler delay, we can use a interup based timer delay to tick away in the background until it needs to fire, allowing the processing core to do other things in the mean time like check sensors, or write memory, or something.
+Rather than using the assembler delay, we can use a interupt based timer delay to tick away in the background until it needs to fire, allowing the processing core to do other things in the mean time like check sensors, or write memory etc...
 
 Libopencm3 has a systick module. This accesses a 24-bit timer which is built into every Cortex M core (from ARM themselves, not STM32), it is typically used for periodic interrupts, system time keeping, and delays.
 
@@ -53,7 +53,7 @@ Clock sources for SysTick:
 - STK_CSR_CLKSOURCE_AHB - CPU Clock
 - STK_CSR_CLKSOURCE_AHB_DIV8 - CPU Clock / 8.
 
-Openlibcm3 provides a HAL in libopencm3/includes/libopencm3/cm3/systick.h which contains the following function prototypes to set systick hardware:
+Libopencm3 provides a HAL in libopencm3/includes/libopencm3/cm3/systick.h which contains the following function prototypes to set systick hardware:
 
 - void systick_set_reload(uint32_t value);
 - bool systick_set_frequency(uint32_t freq, uint32_t ahb);
@@ -72,6 +72,8 @@ The [libopencm3 docs for systick](https://libopencm3.org/docs/latest/stm32f1/htm
 
 So lets make a slighly more professional version of our blinky which uses a timer rather than raw clock cycles.
 
+Import the systick module:
+
 ```c
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
@@ -83,13 +85,13 @@ So lets make a slighly more professional version of our blinky which uses a time
 #define LED_PIN GPIO2 // same with the pin
 ```
 
-Create a 32bit unsigned int to hold a millisecond value that will count from system startup, about 49 days worth of counting before resetting. It's important to set this as voltaile as it will be modified by sus_tick_handler(), not inside main(). Without volatile declaration the compiler might opimise out reads/writes thinking the value is unused:
+Create a 32bit unsigned int to hold a millisecond value that will count from system startup, about 49 days worth of counting before resetting. It's important to set this as voltaile as it will be modified by sys_tick_handler(), not inside main(). Without volatile declaration the compiler might opimise out reads/writes thinking the value is unused:
 
 ```c
 static volatile uint32_t system_millis = 0;
 ```
 
-Write a small handler for the interups from systick to increment the system_millis value:
+Write a small handler for the interupts from systick to increment the system_millis value:
 
 ```c
 void sys_tick_handler(void){
@@ -99,7 +101,7 @@ void sys_tick_handler(void){
 
 Create a sleep function, this is a "busy-waiting" approach and so blocks the CPU from doing anything else whilst the delay occurs, although ISRs still run so it can respond to interrupts.
 
-```
+```c
 void msleep(uint32_t ms) {
     uint32_t start = system_millis;
     while ((system_millis - start) < ms);
@@ -108,7 +110,7 @@ void msleep(uint32_t ms) {
 
 Setup SysTick to interupt every 1ms, in our case we have a 72Mhz system clock
 
-```
+```c
 void systick_setup(void) {
     systick_set_clocksource(STK_CSR_CLKSOURCE_AHB);
     systick_set_reload(72000 - 1) // 72,000 ticks for 1ms at 72 MHz
@@ -120,7 +122,7 @@ void systick_setup(void) {
 
 Enable the peripheral clocks and configure GPIO pins
 
-```
+```c
 void gpio_setup(void) {
     rcc_periph_clock_enable(RCC_GPIOB);
     gpio_set_mode(LED_PORT,
@@ -132,7 +134,7 @@ void gpio_setup(void) {
 
 Make sure the system clock is set to 72 MHz, here we will use the extrnal clock for some unnessicary accuracy. To learn more about all the different clock sources available on the STM32 chips take a look [here](https://community.st.com/t5/stm32-mcus/part-1-introduction-to-the-stm32-microcontroller-clock-system/ta-p/605369). It's also worth looking at the STM32 manual RM008 and searching for "Clock tree", "HSI clock", "HSE clock".
 
-```
+```c
 void clock_setup(void) {
     rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ]);
 }
@@ -141,7 +143,7 @@ void clock_setup(void) {
 
 Our main loop is now fairly clean:
 
-```
+```c
 int main(void) {
     clock_setup();
     gpio_setup();
@@ -156,7 +158,7 @@ int main(void) {
 
 Make sure to go back to the top of the file and declare your function protoypes so that the compiler does not complain:
 
-```
+```c
 void systick_setup(void);
 void gpio_setup(void);
 void clock_setup(void);
@@ -167,7 +169,7 @@ Alternatively you could declare your functions as static and it would also chill
 
 
 Save and quit the file, run make, and flash that bad boi using an ST-LINK V2 with:
-```
+```bash
 st-flash write blinky.bin 0x8000000
 ```
 
