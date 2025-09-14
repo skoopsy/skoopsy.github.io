@@ -1,0 +1,308 @@
+---
+layout: post
+title:  "STM32 #6: STM32 Clocks"
+date:   2025-09-07 19:00:00 +0000
+categories: STM32
+---
+In the last few posts we have used a specific clock in our clock_setup() function:
+```
+RCC_CLOCK_HSE8_72MHZ()
+```
+This post will expand on timers and clocks to build up an understanding of what is possible.
+
+# STM32 Clocks
+
+STM32 chips have a few possible clock sources such as:
+- HSI: Internal RC oscillator, which is 8 MHz on an F1 chip
+- HSE: External crystal/oscillator, which is also typically 8 MHz
+- PLL: Phase-Locked loop that multiplies either the HSI, or HSE.
+
+The clock sources are configured via the Reset and Clock Control (RCC) peripheral, which sets what source is used and how it is divided or multiplied to produce:
+- **SYSCLK:** The main CPU/System clock
+- **AHB:** Advanced high-performance bus. AHB carries clocks for the core, DMA, NVIC, etc and it's clock is labelled as HCLK = AHB / pre-scaler
+- **APB1 & APB2:** Advanced Peripheral Buses for connecting peripherals to the core: 
+    - PCLK1 = HCLK / APB1 prescaler (timers 2-7, I2C, SPI2/3, USART2/3, USB, CAN, DAC, PWR)
+    - PCLK2 = HCLK / APB2 prescaler. (GPIO, AFIO, ADC, SPI1, USART1, timers 1 & 8.
+- **USBCLK:** Must be 48 MHz for USB to work properly. USBCLK = PLLCLK / 1.5
+    - If using USBCLK - PLL must be setup to 72 MHz, which is often the preferred standard configuration.
+
+# Timer basics
+
+A timer is a hardware peripheral that counts clock cycles. These can be used to generate an event (e.g. update, compare, overflow), trigger an interrupt, toggle pins (e.g. PWM, output compare), or synchronise with other peripherals (e.g. ADC, DMA).
+
+There are several different timers:
+ - **General purpose:** for any general application such as; Output comparison (timing and delay generation), one-pulse mode, input capture, and sensor interfacing
+
+- **Advanced timers:** Additional features over the general purpose timers such as for PWM and motor control. 
+
+- **One or two channel timers:** general-purpose but with less channels
+
+- **One or two channel timers with complementary outputs:** Additional deadtime generator on one channel. This can allow a general-purpose timer to be used when an additional advanced timer is required.
+
+- **Basic timers:** timebase or triggering DAC peripherals. These do not have any input or output functions.
+
+- **Low-power timers:** General purpose timers that operate in low-power modes. Used for wake-up events.
+
+- **High-resolution timers:** Specialised timers designed for power applications. Can be used when high res timing is needed.
+
+
+The following components make up a timer:
+
+- **Counter register (CNT):** Holds the current timer value
+
+- **Prescaler (PSC):** Divides the input clock to slow down counting. You probably don't need to count every 13.89 nanoseconds (the period of a 72Mhz signal). Rather, you might set the prescaler to 71, then the timer will tick at 1 MHz = 1us per tick.
+
+- **Auto-reload register (ARR):** Defines the reset point of the counter reset (overflow). Setting ARR = 999 with 1MHz tick will produce a timer period = 1000 us = 1 ms.
+
+- **Compare registers (CCR1-CCRx):** Used to trigger events when CNT matches these values.
+
+The timer takes a clock source (APB1 or APB2 bus), then divivdes the clock by the prescaler, and incremenets the counter every tick. When the counter > ARR, it resets to 0 and generates an update event. So you can control the timing with the prescaler and auto-reload registers.
+
+
+Here is a quick summary of the general purpose timer (TIM2 to TIM5) registers pulled from RM0008:
+
+- TIMx_CR1 - Control register 1
+- TIMx_CR2
+- TIMx_SMCR - Slave mode control register
+- TIMx_DIER - DMA/Interrupt enable register
+- TIMx_SR - Status register
+- TIMx_EGR - Event generation register
+- TIMx_CCMR1 - Capture/Compare mode register 1
+- TIMx_CCMR2
+- TIMx_CCER - Capture/Compare enable register
+- TIMx_CNT - Counter
+- TIMx_PSC - Prescaler
+- TIMx_ARR - Auto-reload register
+- TIMx_CCR1 - Capture/compare register 1
+- TIMx_CCR2
+- TIMx_CCR3
+- TIMx_CCR4
+- TIMx_DCR - DMA control register
+- TIMx_DMAR - DMA address for full transfer
+
+The advanced-control timers (TIM1 & TIM8) have an independent but similar set of registers with the following additions:
+
+- TIMx_RCR - Repetition counter register 
+- TIMx_BDTR - Break and dead-time register 
+
+The STM32F103C8xx only has access to TIM1, TIM2, TIM3, & TIM4 timers.
+
+Who the hell wants to deal with registers just yet... luckily we know about a great effort that has been done by clever and/or persistent people to put together a library to control these registers in... you guessed it; libopencm3.
+
+# Libopencm3 timer API
+You'll be looking for the libopencm3/stm32/timer.h file which provides utility for all STM32 timer functionality.
+
+**References to base address for each timer peripheral:**
+- TIM1 (0x40012C00U)
+- TIM2 (0x40000000U)
+- TIM3 (0x40000400U)
+- TIM4 (0x40000800U)
+
+**Some basic counter control:**
+- timer_reset(TIMx) - Reset to power on default
+- timer_enable_counter(TIMx) - Start counting
+- timer_disable_counter(TIMx) - Stop counting
+- timer_set_counter(TIMx, 0) - Write to CNT register
+- timer_get_counter(TIMx) - Read CNT register (uint32)
+- timer_direction_up(TIMx) - Set up-counting
+- timer_direction_down(TIMx) - Set down-counting
+
+**Timer base configuration:**
+- timer_set_prescaler(TIMx, 7199) - Set prescaler to divide input clock by amount (PSC)
+- timer_set_period(TIMx, 9999) - Auto-reload value (ARR)
+- timer_generate_event(TIMx, TIM_EGR_UG) - Force update
+
+**Interrupts & DMA (Direct Memory Access):**
+- timer_enable_irq(TIMx, TIM_DIER_UIE) - Enable update IRQ
+- timer_disable_irq(TIMx, TIM_DIER_UIE) - ...
+- timer_get_flag(TIMx, TIM_SR_UIF) - Check update flag
+- timer_clear_flag(TIMx, TIM_SR_UIF) - Clear update flag
+
+**Output Compare / PWM:**
+- timer_set_oc_mode(TIMx, TIMOC1, TIM_OCM_OWM1) - PWM mode
+- timer_set_oc_value(TIMx, TIM_OC1, 5000) - Duty (CCR1)
+- timer_enable_oc_output(TIMx, TIM_OC1) - Enable channel
+- timer_set_oc_polarity_high(TIMx, TIM_OC1) - Active high
+
+**Input capture:**
+- timer_ic_set_input(TIMx, TIM_IC1, TIM_IC_IN_TI1) - Use TI1 pin
+- timer_ic_set_polarity(TIMx, TIM_IC1, TIME_IC_RISING)
+- timer_ic_enable(TIMx, TIM_IC1)
+- timer_get_ic_value(TIM2, TIM_IC1) (unint32)
+
+**One-pulse mode:**
+- timer_one_shot_mode(TIMx) - Counter runs once then stops
+
+**Advanced-control features (TIM1 & TIM8):**
+- timer_enable_break_main_output(TIM1) - Enable MOE (BDTR register)
+- timer_set_deadtime(TIM1, val) - Insert dead time for complementary PWM
+
+# Interrupts / NVIC
+
+The Nested Vectored Interrupt Controller (NVIC) is the hardware block inside a Coretex M chip that manages interrupts.
+
+- Nested: Higher-priority interrupts can interrupt lower priorty ones.
+- Vectored:  Each interrupt source has its own entry in the vector table
+- Interrupt Controller: Decides which interrupt the CPU should run, based on pending flags and priorities.
+
+Arm's documentation describes the NVIC as:
+> - facilitates low-latency exception and interrupt handling
+> - controls power management
+> - implements System Control registers
+
+A peripheral can raise an interrupt request signal, which goes to the NVIC. The NVIC then decides; should the interrupt wake the CPU? Which interrupt has highest priority? Where in memory should I jump (ISR address)?
+
+The NVIC is what makes ARM Cortex-M chips react instantly to external events without wasting CPU time in polling loops.
+
+To do interesting things with timers we will need to understand and use NVIC/ Interrupts.
+
+Here are the most crucial excerpts from the libopencm3 helpers for the STM32F1:
+```c
+void 	nvic_enable_irq (uint8_t irqn)
+ 	NVIC Enable Interrupt
+ 
+void 	nvic_disable_irq (uint8_t irqn)
+ 	NVIC Disable Interrupt
+ 
+uint8_t	nvic_get_pending_irq (uint8_t irqn)
+ 	NVIC Return Pending Interrupt
+ 
+void 	nvic_set_pending_irq (uint8_t irqn)
+ 	NVIC Set Pending Interrupt
+ 
+void 	nvic_clear_pending_irq (uint8_t irqn)
+ 	NVIC Clear Pending Interrupt
+ 
+uint8_t	nvic_get_irq_enabled (uint8_t irqn)
+ 	NVIC Return Enabled Interrupt
+ 
+void 	nvic_set_priority (uint8_t irqn, uint8_t priority)
+ 	NVIC Set Interrupt Priority ( 16 levels 0-255 in steps of 16)
+ 
+uint8_t 	nvic_get_active_irq (uint8_t irqn)
+ 	NVIC Return Active Interrupt
+ 
+void 	nvic_generate_software_interrupt (uint16_t irqn)
+ 	NVIC Software Trigger Interrupt
+```
+**To implement an interrupt:**
+1. Enable the timers interrupt in the DIER register.
+2. Enable the interrupt in NVIC
+3. Write the ISR:
+
+# Example using timers and interrupts to blink an led, again...
+
+Within a an example project from libopencm3 (setup similarly to previous posts) we will edit the main file within my-projects for this example.
+
+Lets include all the libopencm3 libraries we need:
+```c
+#include <libopencm3/stm32/rcc.h>
+#include <libopencm3/stm32/gpio.h>
+#include <libopencm3/stm32/timer.h>
+#include <libopencm3/stm32/f1/nvic.h>
+```
+
+We start by  setting the SYSCLK configuration to run at 72 MHz from the HSE source:
+
+```c
+static void clock_setup(void) {
+    /* Use default 72 MHz clock setup*/
+    rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ]);
+}
+```
+
+Initialise and set up the GPIO pin to be able to be toggled in pushpull mode for the onboard LED. In the WeActStudio board case this is PB2:
+```c
+static void gpio_setup(void) {
+    /* Set PB2 (LED pin) to push-pull 2mhz*/
+    rcc_periph_clock_enable(RCC_TIM2);
+    gpio_set_mode(GPIOB,
+                  GPIO_MODE_OUTPUT_2_MHZ,
+                  GPIO_CNF_OUTPUT_PUSHPULL,
+                  GPIO2
+    );
+    gpio_set(GPIOB, GPIO2);
+```
+
+The setup for the timer will utilise the first basic timer on the chip which is TIM2, recalling that TIM1 is an advanced timer, which could do this job, but you might want it for more demanding tasks on something else. 
+
+The prescaler for TIM 2 is a little more complicated than it first seems. We will set the SYSCLk to be 72 MHz. TIM2 is on the APB1 bus, which by default has the prescaler set to 2, unless otherwise set. So, the APB1 runs at 72/2 = 36 MHz. But this is where it threw me until I found it in the RM0008 manual: 
+
+*"If the APB prescaler is configured to a valuer other than 1, the timer clock frequencies are automatically multiplied by 2... When the APB1 prescaler is not 1, the timer clock is equal to 2x the APB1 clock."*
+
+So if the SYSCLK is at 72 MHz, resulting in the APB1 (at a prescaler of 2) = 36 MHz, the TIM2's clock will be at 2 x 36 = 72 MHz! This is done because the STM32 timers can use a higher speed clock even if the peripheral bus is slower. Which allows the timers to maintain an improve precision for things like PWM, without being bottlenecked by the APB bus. This is done via a mechanism within the RCC logic.
+
+Lastly, the STM32 timers use a zero-based prescaler counting, so starting from 0 to N, so you have to subtract 1 from the number of counts you want as an input.
+
+```c
+static void tim2_setup(void) {
+    // Enable the peripheral bus that routes to TIM2 as they are off by default
+    rcc_periph_clock_enable(RCC_TIM2);
+
+    // STM32F103x chip: TIM2 timer should be running at 72 MHz so:
+    timer_set_prescaler(TIM2, 7200 -1); // 72mhz / 7200 = 10 kHz per tick
+    
+    // Set the ARR (Auto reload) - ticker before register overflow, reseting to 0.
+    timer_set_period(TIM2, 10000 -1); // 10 Khz / 10000 = 1Hz update
+
+    // Once overflow set the timer to trigger the update event
+    timer_update_on_overflow(TIM2);
+
+    // Enable update events to trigger an interrupt from TIM2 (Update Interrupt Enable (UIE) in TIM2 DIER register) on overflow.
+    timer_enable_irq(TIM2, TIM_DIER_UIE);
+
+    // Enable TIM2 interrupt line in the NVIC so the core will do something with it.
+    nvic_enable_irq(NVIC_TIM2_IRQ);
+
+    // Start the timer! (TIM2_CR1=1)
+    timer_enable_counter(TIM2);
+}
+```
+
+Write the timer interrupt service routine for what happens when the timer produces the interrupt, in our case we will toggle an LED attached to GPIO2 (PB2). The function void tim2_isr(void) is defined as the default handler in libopencm3 and so when you compile the code the linker will recognise it from the vector table TIM2 IRQ entry:
+
+```c
+void tim2_isr(void) {
+    if (timer_get_flag(TIM2, TIM_SR_UIF)) {
+        timer_clear_flag(TIM2, TIM_SR_UIF);
+        gpio_toggle(GPIOB, GPIO2);
+    }
+}
+```
+
+Write the main loop to setup the timer and wait for it to fire:
+
+```c
+int main(void) {
+    clock_setup();
+    gpio_setup();
+    tim2_setup();
+
+    while (1) {
+        __asm__("wfi"); // Sleep until interrupt
+    }
+}
+```
+
+Finally don't forget your function prototypes at the top of the file belwo the includes:
+
+```c
+static void clock_setup(void);
+static void_gpio_setup(void);
+static_void tim2_setup(void);
+```
+
+Shockingly simple, we could do other stuff, but in this program we can set the chip to wait for the interrupt in a very low power state instead using the wait for interrupt assembly command "wfi".
+
+For more information on timers check out the ST application note: AN4013, and RM0008
+
+<script src="https://utteranc.es/client.js"
+        repo="skoopsy/skoopsy.github.io"
+        issue-term="pathname"
+        label="blog-embedded1"
+        theme="preferred-color-scheme"
+        crossorigin="anonymous"
+        async>
+</script>
+
+Copywrite © 2025 Skoopsy
