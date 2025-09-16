@@ -1,10 +1,10 @@
 ---
 layout: post
-title:  "STM32 #4: The interupt counter on Arm Cortex M with Libopencm3 & SysTick "
+title:  "STM32 #4: Interrupt counter on Arm Cortex-M with Libopencm3 & SysTick "
 date:   2025-06-29 23:03:00 +0000
-categories: STM32, Libopencm3, Bluepill
+categories: STM32
 ---
-Board: WeActStudio BluePill Plus STM32 F103CBT8 (Arm Coretex M3)
+Board: WeActStudio BluePill Plus STM32 F103CBT8 (Arm Cortex M3)
 
 In this post we will progress from using the assembler code __asm__("nop") to using a interrupt based delay via the libopencm3 library on the Bluepill STM32F1 board. See [STM32: From Template to Blinky - Building Bluepill Firmware with libopencm3](https://skoopsy.dev/stm32/2025/06/29/STM32-3-blinky-bluepill.html) for how to get a blinky running with libopencm3 on a bluepill using make. However, this code should work for any of the chips supported by libopencm3.
 
@@ -20,10 +20,10 @@ int main(void) {
     // Set the PB2 pin as an output pin, in push-pull mode, using the 2 MHz clock
     // This is defined in the libopencm3/stm32/gpio.h file
     gpio_set_mode(GPIOB, // Which GPIO port to target
-                  GPIO_MODE_OUTPUT_2_MHZ, // The output singla clock (alternatives: 10 & 50 Mhz);
+                  GPIO_MODE_OUTPUT_2_MHZ, // The output signal clock (alternatives: 10 & 50 MHz);
                   GPIO_CNF_OUTPUT_PUSHPULL, // Sets the pin as a push-pull output
                   GPIO2 // The pin to set on the GPIO port.
-                  )
+                  );
 
     // Blink loop
     while(1) {
@@ -37,11 +37,11 @@ int main(void) {
 ```
 
 # SysTick
-Rather than using the assembler delay, we can use a interupt based timer delay to tick away in the background until it needs to fire, allowing the processing core to do other things in the mean time like check sensors, or write memory etc...
+Rather than using the assembler delay code and the speed of the main loop from the last post, we can use a interrupt based timer delay to tick away in the background until it needs to fire, allowing the processing core to do other things in the mean time - like check sensors, or write memory etc...
 
-Libopencm3 has a systick module. This accesses a 24-bit timer which is built into every Cortex M core (from ARM themselves, not STM32), it is typically used for periodic interrupts, system time keeping, and delays.
+Libopencm3 has an API for the Cortex-M SysTick timer. This accesses a 24-bit timer which is built into every Cortex-M core (from ARM themselves, not STM32), it is typically used for periodic interrupts, system time keeping, and delays. This is a very simple timer, where you do not have access to things such as the prescaler and other configuration options that will be covered in a post on timers.
 
-It counts downwards, when it hits zero, it can generate an interrupt and reload automatically.
+It counts downwards with a maximum relaod of 2^24-1, when it hits zero, it can generate an interrupt and reload automatically.
 
 SysTick has a small set of registers:
 - STK_CTRL - control & status
@@ -53,7 +53,9 @@ Clock sources for SysTick:
 - STK_CSR_CLKSOURCE_AHB - CPU Clock
 - STK_CSR_CLKSOURCE_AHB_DIV8 - CPU Clock / 8.
 
-Libopencm3 provides a HAL in libopencm3/includes/libopencm3/cm3/systick.h which contains the following function prototypes to set systick hardware:
+Select AHB via systick_set_clocksource(STK_CSR_CLKSOURCE_AHB) and AHB/8 using the corresponding argument.
+
+Libopencm3 provides the API in libopencm3/includes/libopencm3/cm3/systick.h which contains the following function prototypes to configure the SysTick timer on the core:
 
 - void systick_set_reload(uint32_t value);
 - bool systick_set_frequency(uint32_t freq, uint32_t ahb);
@@ -70,7 +72,7 @@ Libopencm3 provides a HAL in libopencm3/includes/libopencm3/cm3/systick.h which 
 
 The [libopencm3 docs for systick](https://libopencm3.org/docs/latest/stm32f1/html/group__CM3__systick__file.html#ga2604630453d0b6b35601375d0ee7e4a0)
 
-So lets make a slighly more professional version of our blinky which uses a timer rather than raw clock cycles.
+Lets make a slightly more useful version of our blinky which uses a timer rather than raw clock cycles.
 
 Import the systick module:
 
@@ -79,7 +81,7 @@ Import the systick module:
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/cm3/systick.h> // Notice it is not stm32 specific
 
-#include <stdint.h> // Standard library for delaring int32
+#include <stdint.h> // Standard library for declaring int32
 
 #define LED_PORT GPIOB // set the port in a more flexible fashion
 #define LED_PIN GPIO2 // same with the pin
@@ -91,7 +93,7 @@ Create a 32bit unsigned int to hold a millisecond value that will count from sys
 static volatile uint32_t system_millis = 0;
 ```
 
-Write a small handler for the interupts from systick to increment the system_millis value:
+SysTick has a predefined interrupt service routine called sys_tick_handler() where we can add the functionality upon the interrupt triggering. In this case, to increment the system_millis value:
 
 ```c
 void sys_tick_handler(void){
@@ -113,7 +115,7 @@ Setup SysTick to interupt every 1ms, in our case we have a 72Mhz system clock
 ```c
 void systick_setup(void) {
     systick_set_clocksource(STK_CSR_CLKSOURCE_AHB);
-    systick_set_reload(72000 - 1) // 72,000 ticks for 1ms at 72 MHz
+    systick_set_reload(72000 - 1); // 72,000 ticks for 1ms at 72 MHz
     systick_clear();
     systick_interrupt_enable();
     systick_counter_enable();
@@ -132,7 +134,7 @@ void gpio_setup(void) {
 }
 ```
 
-Make sure the system clock is set to 72 MHz, here we will use the extrnal clock for some unnessicary accuracy. To learn more about all the different clock sources available on the STM32 chips take a look [here](https://community.st.com/t5/stm32-mcus/part-1-introduction-to-the-stm32-microcontroller-clock-system/ta-p/605369). It's also worth looking at the STM32 manual RM008 and searching for "Clock tree", "HSI clock", "HSE clock".
+Make sure the system clock is set to 72 MHz, here we will use the external clock for some unnecessary accuracy. To learn more about all the different clock sources available on the STM32 chips take a look [here](https://community.st.com/t5/stm32-mcus/part-1-introduction-to-the-stm32-microcontroller-clock-system/ta-p/605369). It's also worth looking at the STM32 manual RM008 and searching for "Clock tree", "HSI clock", "HSE clock".
 
 ```c
 void clock_setup(void) {
@@ -199,8 +201,6 @@ void sys_tick_handler(void);
 // Set a varaible to hold the millisecond count
 static volatile uint32_t system_millis = 0;
 
-void systickhandler(void);
-
 // A mini handler to increment the system_millis counter
 void sys_tick_handler(void) {
 	system_millis++;
@@ -257,4 +257,4 @@ int main(void) {
         async>
 </script>
 
-Copywrite © 2025 Skoopsy
+Copyright © 2025 Skoopsy

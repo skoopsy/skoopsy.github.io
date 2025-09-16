@@ -6,25 +6,26 @@ categories: STM32
 ---
 In the last few posts we have used a specific clock in our clock_setup() function:
 ```
-RCC_CLOCK_HSE8_72MHZ()
+RCC_CLOCK_HSE8_72MHZ
 ```
 This post will expand on timers and clocks to build up an understanding of what is possible.
 
 # STM32 Clocks
 
 STM32 chips have a few possible clock sources such as:
-- HSI: Internal RC oscillator, which is 8 MHz on an F1 chip
+- HSI: Internal RC oscillator, which is 8 MHz on an F1 chip, lower accuracy than a HSE crystoal.
 - HSE: External crystal/oscillator, which is also typically 8 MHz
 - PLL: Phase-Locked loop that multiplies either the HSI, or HSE.
 
 The clock sources are configured via the Reset and Clock Control (RCC) peripheral, which sets what source is used and how it is divided or multiplied to produce:
 - **SYSCLK:** The main CPU/System clock
-- **AHB:** Advanced high-performance bus. AHB carries clocks for the core, DMA, NVIC, etc and it's clock is labelled as HCLK = AHB / pre-scaler
+- **AHB:** Advanced high-performance bus. AHB carries clocks for the core, DMA, NVIC, etc and its clock is labelled as HCLK = AHB / pre-scaler
 - **APB1 & APB2:** Advanced Peripheral Buses for connecting peripherals to the core: 
     - PCLK1 = HCLK / APB1 prescaler (timers 2-7, I2C, SPI2/3, USART2/3, USB, CAN, DAC, PWR)
     - PCLK2 = HCLK / APB2 prescaler. (GPIO, AFIO, ADC, SPI1, USART1, timers 1 & 8.
 - **USBCLK:** Must be 48 MHz for USB to work properly. USBCLK = PLLCLK / 1.5
-    - If using USBCLK - PLL must be setup to 72 MHz, which is often the preferred standard configuration.
+    - If using USBCLK - PLL must be setup to 72 MHz, which is often the preferred standard configuration. This is because USB requires 48 MHz, and you commonly run PLL at 72 MHz, and set the uSB prescaler to 1.5 which results in 48 MHz. Other PLL values can work if a suitable prescaler exists.
+
 
 # Timer basics
 
@@ -56,7 +57,7 @@ The following components make up a timer:
 
 - **Compare registers (CCR1-CCRx):** Used to trigger events when CNT matches these values.
 
-The timer takes a clock source (APB1 or APB2 bus), then divivdes the clock by the prescaler, and incremenets the counter every tick. When the counter > ARR, it resets to 0 and generates an update event. So you can control the timing with the prescaler and auto-reload registers.
+The timer takes a clock source (APB1 or APB2 bus), then divides the clock by the prescaler, and incremenets the counter every tick. When the counter > ARR, it resets to 0 and generates an update event. So you can control the timing with the prescaler and auto-reload registers.
 
 
 Here is a quick summary of the general purpose timer (TIM2 to TIM5) registers pulled from RM0008:
@@ -119,16 +120,16 @@ You'll be looking for the libopencm3/stm32/timer.h file which provides utility f
 - timer_clear_flag(TIMx, TIM_SR_UIF) - Clear update flag
 
 **Output Compare / PWM:**
-- timer_set_oc_mode(TIMx, TIMOC1, TIM_OCM_OWM1) - PWM mode
+- timer_set_oc_mode(TIMx, TIM_OC1, TIM_OCM_PWM1) - PWM mode
 - timer_set_oc_value(TIMx, TIM_OC1, 5000) - Duty (CCR1)
 - timer_enable_oc_output(TIMx, TIM_OC1) - Enable channel
 - timer_set_oc_polarity_high(TIMx, TIM_OC1) - Active high
 
 **Input capture:**
 - timer_ic_set_input(TIMx, TIM_IC1, TIM_IC_IN_TI1) - Use TI1 pin
-- timer_ic_set_polarity(TIMx, TIM_IC1, TIME_IC_RISING)
+- timer_ic_set_polarity(TIMx, TIM_IC1, TIM_IC_RISING)
 - timer_ic_enable(TIMx, TIM_IC1)
-- timer_get_ic_value(TIM2, TIM_IC1) (unint32)
+- timer_get_ic_value(TIM2, TIM_IC1) (uint32_t)
 
 **One-pulse mode:**
 - timer_one_shot_mode(TIMx) - Counter runs once then stops
@@ -139,7 +140,7 @@ You'll be looking for the libopencm3/stm32/timer.h file which provides utility f
 
 # Interrupts / NVIC
 
-The Nested Vectored Interrupt Controller (NVIC) is the hardware block inside a Coretex M chip that manages interrupts.
+The Nested Vectored Interrupt Controller (NVIC) is the hardware block inside a Cortex M chip that manages interrupts.
 
 - Nested: Higher-priority interrupts can interrupt lower priorty ones.
 - Vectored:  Each interrupt source has its own entry in the vector table
@@ -199,7 +200,7 @@ Lets include all the libopencm3 libraries we need:
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/timer.h>
-#include <libopencm3/stm32/f1/nvic.h>
+#include <libopencm3/cm3/nvic.h>
 ```
 
 We start by  setting the SYSCLK configuration to run at 72 MHz from the HSE source:
@@ -215,7 +216,7 @@ Initialise and set up the GPIO pin to be able to be toggled in pushpull mode for
 ```c
 static void gpio_setup(void) {
     /* Set PB2 (LED pin) to push-pull 2mhz*/
-    rcc_periph_clock_enable(RCC_TIM2);
+    rcc_periph_clock_enable(RCC_GPIOB);
     gpio_set_mode(GPIOB,
                   GPIO_MODE_OUTPUT_2_MHZ,
                   GPIO_CNF_OUTPUT_PUSHPULL,
@@ -284,15 +285,15 @@ int main(void) {
 }
 ```
 
-Finally don't forget your function prototypes at the top of the file belwo the includes:
+Finally don't forget your function prototypes at the top of the file below the includes:
 
 ```c
 static void clock_setup(void);
-static void_gpio_setup(void);
-static_void tim2_setup(void);
+static void gpio_setup(void);
+static void tim2_setup(void);
 ```
 
-Shockingly simple, we could do other stuff, but in this program we can set the chip to wait for the interrupt in a very low power state instead using the wait for interrupt assembly command "wfi".
+We could do other stuff, but in this program we can set the chip to wait for the interrupt in a very low power state instead using the wait for interrupt assembly command "wfi".
 
 For more information on timers check out the ST application note: AN4013, and RM0008
 
@@ -305,4 +306,4 @@ For more information on timers check out the ST application note: AN4013, and RM
         async>
 </script>
 
-Copywrite © 2025 Skoopsy
+Copyright © 2025 Skoopsy
