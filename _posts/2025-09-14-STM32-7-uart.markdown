@@ -19,7 +19,7 @@ Data is transmitted in "Frames" and is generally used for low data / low speed a
 
 UART is quite special as it is asynchronous, which greatly simplifies the protocol. The transmitter and reciever do not share a common clock source, but instead have a predetermined communication rate known as the "baud" rate ( 1 / time in seconds for 1 bit). Both sides of the comminiucation need to also have a predetermined message structre that matches.
 
-![UART bit frame structure](/docs/assets/img/blog-07-bit-struct)
+![UART bit frame structure](/docs/assets/img/blog-07-bit-struct.png)
 
 The TX/RX pin will be held at high-voltage (1 bit) (3.3 or 5v usually) when idling. Once a message is ready to be sent the high signal will be pulled to low-voltage (0 bit) (close to 0v)and is known as the start bit to signal to the RX on the other end that a message is incoming.
 
@@ -74,13 +74,20 @@ The STM32F1x has 3 UART Serial ports attached to PA_2 & PA_3, PB_6 & PB_7, PA_9 
 
 Check the exact 5 V-tolerance per pin/mode in the STM32F103 datasheet; UART RX (as input) is generally fine with 5 V-tolerant pins, but don’t drive non-tolerant pins above VDD, the pin out I found here shows a 3.3v limit on Serial2 pins. Plug in the TX pin of your chosing on the bluepill, I will use USART1 at pins PA_9 & PA10.
 
+A summary of the pin assignments:
+- USART1: TX PA9, RX PA10 (APB2)
+- USART2: TX PA2, RX PA3 (APB1)
+- USART3: TX PB10, RX PB11 (APB1)
+
+Note: It is possible to remapped USART1 to PB6/7 via the alternate function pin selection (AFIO) module (libopencm3/stm32/afio.h) using gpio_primary_remap(AFIO_MAPR_SWJ_CFG_JTAG_OFF_SW_ON, AFIO_MPR_USART1_REMAP) - [libopencm3 doc](https://libopencm3.org/docs/latest/stm32f1/html/group__gpio__defines.html#ga9fa7b8ed1d38d8b3d0e22bdfbabb9003);
+
 Inside my-project create a header file for the uart module, uart.h:
 
 First add an include guard, so that if you incude this header in multiple files (can happen automatically through other headers) it will avoid compiler errors. Include guards in embedded headers prevent chaos from the spaghetti of peripheral dependencies, big vendor libraries, and indirect includes:
 
 ```c
-#ifndef UART_H \\ if not defined, then define it!
-#define UART_H \\ setting macro if already defined
+#ifndef UART_H // if not defined, then define it!
+#define UART_H // setting macro if already defined
 ```
 
 Define some basic functions that we will build for sending data across UART:
@@ -90,7 +97,7 @@ void uart_init(void);
 void uart_send_char(char c);
 void uart_send_string(const char *str);
 
-#endif \\ this ends the include guard!
+#endif // this ends the include guard!
 ```
 
 Create the main uart module utilising libopencm3, uart.c:
@@ -99,7 +106,7 @@ Include the library headers:
 ```c
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
-#include <libopencm3/stm32/usart.h> # New library that we will use
+#include <libopencm3/stm32/usart.h> // New library that we will use
 
 #include "uart.h"
 ```
@@ -113,13 +120,13 @@ void uart_init(void){
     rcc_periph_clock_enable(RCC_GPIOA);
     
     // Enable the peripheral clock specifically for the USART port
-    rcc_periph_clock_enable(RCC_USART1):
+    rcc_periph_clock_enable(RCC_USART1);
 
     // Set the chosen USART GPIO pins to work with UART, note the ALTFN_PUSHPULL, this is specifically for UART
     gpio_set_mode(GPIOA,
                   GPIO_MODE_OUTPUT_50_MHZ,
                   GPIO_CNF_OUTPUT_ALTFN_PUSHPULL,
-                  GPIO_USART1_TX
+                  GPIO9 // GPIO_USART1_TX
                   );
 
     // Initialise USART protocol configuration using libopencm3
@@ -132,7 +139,7 @@ void uart_init(void){
     usart_enable(USART1);
 }
 ```
-Notice, that we have set the flow control to NONE, using the usart commands, so when using asynchronous (UART) you still use the synchronous (USART) functions to set this. In libopencm3 you will confusingly find both a USART and UART API... The UART API seems to be a simplified wrapper for a subset of the USART API. When consulting the STM31F1x RM0008 manual, it appears that all the ports are setup for the more feature rich USART which includes UART (UART + SPI), and so lets stick with that API for now and leave the UART one out.
+Notice, that we have set the flow control to NONE, using the USART commands, so when using asynchronous (UART) you still use the synchronous (USART) functions to set this. In libopencm3 you will confusingly find both a USART and UART API... The UART API seems to be a simplified wrapper for a subset of the USART API. When consulting the STM31F1x RM0008 manual, the peripherals are USARTs (Universal Synchronous/Asynchronous). We'll use them in asynchronous 'UART' mode.
 
 Create two small wrapper functions to handle chars and strings. For this we will utilise the libopencm3 USART API again:
 ```c
@@ -156,8 +163,10 @@ Create your main.c file and include the uart header:
 
 Write a small main loop to send some stuff over uart using the uart_send_String command we made:
 ```
+
+uart_init();
+
 int main(void) {
-    uart_init();
 
     uart_send_string("UART TX works, wahooo!");
 
@@ -173,14 +182,14 @@ CFILES += uart.c
 
 You are ready to flash! Run a make clean, then make command to make sure everything has compiled correctly.
 
-Connect your device up via the ST-Link v2 SWD debugger. Run st-info --probe to check your device is connected. Then run st-flash write uart-project.bin 0c8000000 (or whatever the .bin file is called (based on your Makefile PROJECT variable). 
+Connect your device up via the ST-Link v2 SWD debugger. Run st-info --probe to check your device is connected. Then run st-flash write uart-project.bin 0x8000000 (or whatever the .bin file is called (based on your Makefile PROJECT variable). 
 
 No connect up a USART/UART to USB device, preferably an FTDI based one, connect the pins up to the correct enabled USART pins, in this case PA9 & PA10, although we only need the TX pin on the bluepill connected to the RX pin of the UART to USB board, and make sure the ground is connected. If you still have the bluepill powered via the connected ST-Link v2, then do not connect the power up from the UARt to USB device to the bulepill, follow the one power source rule!
 
 run a grep to check for the uart to usb deivce:
 
 ```bash
-ls /dev | grep usb
+ls /dev | grep -i usb
 ```
 
 and you should be able to find the serial address.
@@ -200,7 +209,7 @@ It's all printing on one line, but it works! Okay lets move on to trying to make
 
 ## nanoprintf
 
-[nonoprintf](https://github.com/charlesnicholson/nanoprintf) is a tiny printf library with a reasonably good feature set aimed at embedded devices. This is all packaged into a single drop in file that does not rely on libc and is released with a 0BSD license, which is unconditional and so can be used very freely.
+[nanoprintf](https://github.com/charlesnicholson/nanoprintf) is a tiny printf library with a reasonably good feature set aimed at embedded devices. This is all packaged into a single drop in file that does not rely on libc and is released with a 0BSD license, which is unconditional and so can be used very freely.
 
 There are 4 main APIs:
     - npf_snprintf: For use like [snprintf](https://en.cppreference.com/w/c/io/fprintf) from the stanadrd C library.
@@ -292,4 +301,4 @@ Run make, then st-flash and you can fire up minicom again and see the result!
         async>
 </script>
 
-Copywrite © 2025 Skoopsy
+Copyright © 2025 Skoopsy
