@@ -79,7 +79,7 @@ A summary of the pin assignments:
 - USART2: TX PA2, RX PA3 (APB1)
 - USART3: TX PB10, RX PB11 (APB1)
 
-Note: It is possible to remapped USART1 to PB6/7 via the alternate function pin selection (AFIO) module (libopencm3/stm32/afio.h) using gpio_primary_remap(AFIO_MAPR_SWJ_CFG_JTAG_OFF_SW_ON, AFIO_MPR_USART1_REMAP) - [libopencm3 doc](https://libopencm3.org/docs/latest/stm32f1/html/group__gpio__defines.html#ga9fa7b8ed1d38d8b3d0e22bdfbabb9003);
+Note: It is possible to remapped USART1 to PB6/7 via the alternate function pin selection (AFIO) module (libopencm3/stm32/afio.h) using gpio_primary_remap(AFIO_MAPR_SWJ_CFG_JTAG_OFF_SW_ON, AFIO_MPR_USART1_REMAP) - [libopencm3 doc](https://libopencm3.org/docs/latest/stm32f1/html/group__gpio__defines.html#ga9fa7b8ed1d38d8b3d0e22bdfbabb9003)
 
 Inside my-project create a header file for the uart module, uart.h:
 
