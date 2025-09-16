@@ -19,7 +19,7 @@ Data is transmitted in "Frames" and is generally used for low data / low speed a
 
 UART is quite special as it is asynchronous, which greatly simplifies the protocol. The transmitter and reciever do not share a common clock source, but instead have a predetermined communication rate known as the "baud" rate ( 1 / time in seconds for 1 bit). Both sides of the comminiucation need to also have a predetermined message structre that matches.
 
-![UART bit frame structure](/docs/assets/img/blog-07-bit-struct.png)
+![UART bit frame structure](/docs/assets/img/blog-07-bit-struct.jpeg)
 
 The TX/RX pin will be held at high-voltage (1 bit) (3.3 or 5v usually) when idling. Once a message is ready to be sent the high signal will be pulled to low-voltage (0 bit) (close to 0v)and is known as the start bit to signal to the RX on the other end that a message is incoming.
 
@@ -70,7 +70,7 @@ Now cd up a level and perform the two make commands. You are ready to start writ
 ## Setup the UART module with Libopencm3
 
 The STM32F1x has 3 UART Serial ports attached to PA_2 & PA_3, PB_6 & PB_7, PA_9 & PA_10, and PB_10 & PB_11:
-![Image of board pinout](/docs/assets/img/blog-07-pinout)
+![Image of board pinout](/docs/assets/img/blog-07-pinout.png)
 
 Check the exact 5 V-tolerance per pin/mode in the STM32F103 datasheet; UART RX (as input) is generally fine with 5 V-tolerant pins, but don’t drive non-tolerant pins above VDD, the pin out I found here shows a 3.3v limit on Serial2 pins. Plug in the TX pin of your chosing on the bluepill, I will use USART1 at pins PA_9 & PA10.
 
