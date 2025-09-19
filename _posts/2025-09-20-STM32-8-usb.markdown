@@ -1,0 +1,111 @@
+---
+layout: post
+title:  "STM32 #8: USB Communication"
+date:   2025-09-14 19:00:00 +0000
+categories: STM32
+---
+
+# The USB Protocol
+
+Universal Serial Bus (SUB) is an asynchronous, serial bus protocol based around a host-device architecture where there can only ever be one host, and all communication with the devices is initiated by the host.
+
+host - "upstream"
+device - "downstream"
+
+The host has two subcomponents:
+1. Host Controller - Hardware chipset with software that is responsible for detecting usb devices, managing data, power, and all things on the bus.
+
+2. Root hub - Hardware that provides a starting point for the USB hierarchy on the host system. It is associated with the physical ports which the devices are connected too.
+
+USB supports a 7-bit address for the device, which means a host can allow 127 connections.
+
+The USB 2.0 standard is the defacto default for embedded although I'm sure this will progress at some point. So for now I will focus on USB 2.0 protocol.
+
+# USB 2.0 Specification
+
+USB comes with several possible speeds:
+- Low speed < 1.5Mb/s
+- Full speed < 12 Mb/s
+- High Speed < 480 Mb/s
+- Super speed < 5 Gb/s (USB 3 +)
+- Super speed + < 10 Gb/s (USB 3 +)
+
+A USB 2.0 cable has 4 main cables and a copper drain wire
+- V bus (5v)
+- D+ (3.3v)
+- D- (3.3v)
+- GND
+(USB 3 has 9 wires...)
+
+# Telecommunications Encoding
+
+The bits are transfered via the dataline in a slightly different manner to USART, and so to understand USB encoding and get some context I did a bit of digging it's origins which lead me to telecommuicaton encoding methods.
+
+A simple method for encoding is the Return-to-zero (RZ or RTZ) method. This has a line at a "zero condition", if pulled up to a "significant high condition" it is a binary 1 if pulled to a "significant low condition" it is a binary 0. For each bit the signal returns to the zero condition within the bit period. The zero condition is more of a zero amplitude condition rather than say a 0 v condition. This results in a method which is considered as "self-clocking" and is shown in the pictured below ripped, i mean kindly borrowed, from [wikipedia](https://en.wikipedia.org/wiki/Return-to-zero):
+
+![RZ Encoding](/docs/assets/img/blog-08-rz.png)
+
+There is also a RZ-Inverted (RZI) encoding which i'm sure you can guess so I'll leave that. There is also a more specified version called "Bipolar return-to-zero (Bipolar RZ) where the zero-condtion is as 0 volts, with the significant high condition at a +ve range, and a significant low condition in the -ve range.
+
+Moving a little closer to USB there is a method which takes up half the bandwidth of RZI for the same data rate by removing the zero/rest state; the Non-Return-To-Zero (NRZ or NRTZ) encoding. Here is a picture ripped [wikipedia](https://en.wikipedia.org/wiki/Non-return-to-zero) for NRZ-L, this is what a USART encoding that we have seen before uses:
+
+![NRZ Encoding](/docs/assets/img/blog-08-nrz.png)
+
+NRZ is not a self-clocking signal and so requires a separate clock line or other methods to synchronise bits and prevent "bit slips". That is where a clockline for USART would come in.
+
+From NRZ there are several varients:
+- Non-return-to-zero Level (NRZ-L) - as pictured above.
+- Non-return-to-zero Invereted (NRZ-I) - This can refer to with a M or S varient covered below:
+- Non-return-to-zero Mark (NRZ-M) - Constant signal=0, signal toggles=1)
+- Non-return-to-zero Space (NRZ-S) - Constant signal=1, signal toggles=0)
+
+Making sense of NRZ-M and NRZ-S (also known as NRZI-S): Rather than explicitly stating a significant-high or significant-low signal indicating a 1 or 0 bit, a change in the signal level indicates one logic level and no change in the signal indicates another logic level. The USB protocol uses NRZ-S where a logical 0 is a transition, and a logical 1 is no transition. Wikipedia didn't have a decent picture for NRZI-S, so here's one from [circuitbread](https://www.circuitbread.com/tutorials/how-usb-works-introduction-part-1) (sorry and thank you):
+
+![NRZI-S](/docs/assets/img/blog-08-nrzi-s.png)
+
+You can have unipolar (zero state to some signficant state) or biopolar (two signifcant states either side of the zero state) versions of these.
+
+NRZI encoding presents clock synchronisation issues, what happens if a long string of 1s occur, we could lose synchronisation. So "bit stuffing" is used. Every so many bits a change bit is thrown in there to allow clock resynchronisation.
+
+Going back to the wiring for USB2.0 it uses differential pairs D+ and D-, which are typically a twisted pair to avoid EMF interference, and also generation! With the two lines several states to distinguish configuration such as low-speed or full-speed can be defined in the start of packet (SOP), here is a diagram from circuitbread again on the differential pair encoding, tbh it might just be worth stopping here and reading that article if you want to dive deep on usb!
+
+![Differential Pair encoding](/docs/assets/img/blog-08-differential-pair.png)
+
+From this the host and device can relay configuration information about the protocol to use and then data transfer itself.
+
+#  USB Protocol
+
+USB is a polling mechanism so the host is constantly calling/listening/sending to the devices, but only the host an initiate a transation on the bus.
+
+A USB device has a group of endpoints which each have a unique address that the host can transact with. They are however only unique within the device, so another device could have endpoints with a similar address. The end points are connected to the buffer of the host via "pipes", queue the super mario bros theme...
+
+Endpoints are unidirectional which is defined by the endpoint. USB2.0 has a 32 endpoint limit: 16 IN and 16 OUT. This is from the perspective of the device, so IN means from the device to the host, and out means from the host to the device. Although it's going to be specified at the device, which is kind of messed up isn't it.
+
+Within USB there are 4 main types of data transfer, and these can require different poling rates, and are defined by the type of endpoint:
+- **Control Endpoints:** All devices must support these. Biodirectional endpoints that have 10% of the bandwidth reserved for low and full speed, and 20% for high-speed devices. This type is used for USB system-level control and the configuration of the device, including device enumeration.
+
+- **Interrupt Endpoints:** This is not nessicarily an interrupt in the embedded sense! More that is guarantees a specific polling rate, so the host checks this in a defined and consisten manner. This is key for Human Interface Devices (HID) such as a USB mouse or keyboard. Interrupt transfers have 90%/80% of the bandwidth reserved. The packet size limit is based on the speed, it can vary from 8 - 1024 bytes.
+
+- **Bulk Endpoints:** These are for large data transfer, it focuses on error correction, and larger packet sizes, at the cost of time sensitivity.
+
+- **Isochronous Endpoints:** Support continuous, real-time transfers with a predetermined bandwidth. Not so great at error correction but it is typically less important for the use case of a webcam or audio device.
+
+
+
+
+
+
+
+A USB 
+https://www.circuitbread.com/tutorials/how-usb-works-introduction-part-1
+
+<script src="https://utteranc.es/client.js"
+        repo="skoopsy/skoopsy.github.io"
+        issue-term="pathname"
+        label="blog-embedded7"
+        theme="preferred-color-scheme"
+        crossorigin="anonymous"
+        async>
+</script>
+
+Copyright © 2025 David O'Connor
