@@ -162,8 +162,7 @@ Create your main.c file and include the uart header:
 ```
 
 Write a small main loop to send some stuff over uart using the uart_send_String command we made:
-```
-
+```c
 uart_init();
 
 int main(void) {
@@ -301,4 +300,4 @@ Run make, then st-flash and you can fire up minicom again and see the result!
         async>
 </script>
 
-Copyright © 2025 Skoopsy
+Copyright © 2025 David O'Connor

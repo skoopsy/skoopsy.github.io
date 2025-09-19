@@ -257,4 +257,4 @@ int main(void) {
         async>
 </script>
 
-Copyright © 2025 Skoopsy
+Copyright © 2025 David O'Connor

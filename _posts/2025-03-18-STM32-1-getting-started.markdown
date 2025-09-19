@@ -257,4 +257,4 @@ So now, lets try a blinky!
         async>
 </script>
 
-Copywrite © 2025 Skoopsy
+Copyright © 2025 David O'Connor

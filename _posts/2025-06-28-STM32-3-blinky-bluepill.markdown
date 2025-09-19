@@ -231,4 +231,4 @@ and finally make sure to checkout the [libopencm3 git](https://github.com/libope
         async>
 </script>
 
-Copywrite © 2025 Skoopsy
+Copyright © 2025 David O'Connor
