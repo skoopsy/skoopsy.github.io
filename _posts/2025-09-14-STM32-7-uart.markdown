@@ -70,7 +70,7 @@ Now cd up a level and perform the two make commands. You are ready to start writ
 ## Setup the UART module with Libopencm3
 
 The STM32F1x has 3 UART Serial ports attached to PA_2 & PA_3, PB_6 & PB_7, PA_9 & PA_10, and PB_10 & PB_11:
-![Image of board pinout](/docs/assets/img/blog-07-pinout.png)
+![Image of board pinout](/docs/assets/img/bluepill-plus-pinout.png)
 
 Check the exact 5v tolerance per pin/mode in the STM32F103 datasheet; UART RX (as input) is generally fine with 5v tolerant pins, but don’t drive non-tolerant pins above VDD, the pin out I found here shows a 3.3v limit on Serial2 pins. Plug in the TX pin of your chosing on the bluepill, I will use USART1 at pins PA_9 & PA_10.
 

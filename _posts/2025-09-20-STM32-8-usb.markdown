@@ -89,9 +89,9 @@ Within USB there are 4 main types of data transfer, and these can require differ
 - **Isochronous Endpoints:** Support continuous, real-time transfers with a predetermined bandwidth. Not so great at error correction but it is typically less important for the use case of a webcam or audio device.
 
 
+How does a host know if the device is Low, Full, or highspeed?  The speed of the device is indicated via a pull-up resistor on either the D+ or D- lines to 3.3v. A 1.5kohm resitor pulledup to 3.3v on the D+ line indicated  Full speed device, whereas one on the D- line indicates a Low-speed device.
 
-
-
+On some older Bluepills rather than a 1.5kOhm pull up resistor on the D+ they have a 10kOhm resistor which can cause some issues as it is out of the USB spec. Easiest way to check this is by placing a multimeter between the 3.3v pin and the PA_12 pin (A12) on the Bluepill and checking for the 1.5kOhm. If it is different you can either try to find and swap out the pullup resistor, or add another resistor in parallel across the pins to bring the resistance down to the correct level. The WeActStudio bluepill i'm using has the correct pullup resistor.
 
 
 A USB 
