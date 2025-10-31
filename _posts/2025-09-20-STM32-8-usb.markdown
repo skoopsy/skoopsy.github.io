@@ -86,16 +86,20 @@ Within USB there are 4 main types of data transfer, and these can require differ
 
 - **Bulk Endpoints:** These are for large data transfer, it focuses on error correction, and larger packet sizes, at the cost of time sensitivity.
 
-- **Isochronous Endpoints:** Support continuous, real-time transfers with a predetermined bandwidth. Not so great at error correction but it is typically less important for the use case of a webcam or audio device.
+- **Isochronous Endpoints:** Support continuous, real-time, transfers with a predetermined bandwidth. Not so great at error correction but it is typically less important for the use case of a webcam or audio device.
+
+# Negotiating speed
+How does a host know if the device is Low, Full, or highspeed?  For USB1.0, and USB2.0; low-speed and full-speed is indicated via a pull-up resistor on either the D+ or D- lines to 3.3v. A 1.5kohm resitor pulledup to 3.3v on the D+ line indicated  Full-speed device, whereas one on the D- line indicates a Low-speed device. This is part of the passive initial configuration. To negotiate to Highspeed and beyond, that is done view the configuration control endpoint.
+
+On some older Bluepills rather than a 1.5kOhm pull up resistor on the D+ they have a 10kOhm resistor (by mistake?) which can cause some issues as it is out of the USB spec. Easiest way to check this is by placing a multimeter between the 3.3v pin and the PA_12 pin (A12) on the Bluepill and checking for the 1.5kOhm. If it is different you can either try to find and swap out the pullup resistor, or add another resistor in parallel across the pins to bring the resistance down to the correct level, or if your system deals with it then hope for the best! The WeActStudio bluepill+ has the correct pullup resistor.
+
+# USB Power
+
+Not going to get into USB-C power delivery here. For USB2.0 can supply up to 500mA to a device, which is split into low-power <500mA, and high-power at 500mA form the bus. You additionally have self-powered devices which can obviously draw in excess of 500mA. Additionally before th econfiguration state a USB2.0 device cannot consume more than 100mA.
 
 
-How does a host know if the device is Low, Full, or highspeed?  The speed of the device is indicated via a pull-up resistor on either the D+ or D- lines to 3.3v. A 1.5kohm resitor pulledup to 3.3v on the D+ line indicated  Full speed device, whereas one on the D- line indicates a Low-speed device.
+# The actual USB2.0 communication protocol
 
-On some older Bluepills rather than a 1.5kOhm pull up resistor on the D+ they have a 10kOhm resistor which can cause some issues as it is out of the USB spec. Easiest way to check this is by placing a multimeter between the 3.3v pin and the PA_12 pin (A12) on the Bluepill and checking for the 1.5kOhm. If it is different you can either try to find and swap out the pullup resistor, or add another resistor in parallel across the pins to bring the resistance down to the correct level. The WeActStudio bluepill i'm using has the correct pullup resistor.
-
-
-A USB 
-https://www.circuitbread.com/tutorials/how-usb-works-introduction-part-1
 
 <script src="https://utteranc.es/client.js"
         repo="skoopsy/skoopsy.github.io"

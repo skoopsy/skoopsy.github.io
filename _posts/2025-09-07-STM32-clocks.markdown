@@ -13,9 +13,13 @@ This post will expand on timers and clocks to build up an understanding of what 
 # STM32 Clocks
 
 STM32 chips have a few possible clock sources such as:
-- HSI: Internal RC oscillator, which is 8 MHz on an F1 chip, lower accuracy than a HSE crystoal.
-- HSE: External crystal/oscillator, which is also typically 8 MHz
+- HSI: High-Speed Internal RC oscillator, which is 8 MHz on an F1 chip, lower accuracy than a HSE crystal.
+- LSI: Low-Speed Internal oscillator (Typically 32.768 kHz)
+- HSE: High-Speed External crystal/oscillator, which is also typically 8 MHz
+- LSE: Low-Speed External oscillator (Can be used to run RTC in low-power).
 - PLL: Phase-Locked loop that multiplies either the HSI, or HSE.
+
+External clock sources are typically there because they are more accurate than the cheap internal ones on the chip. WHich can be vital for certain critical timing uses such as USB protocol.
 
 The clock sources are configured via the Reset and Clock Control (RCC) peripheral, which sets what source is used and how it is divided or multiplied to produce:
 - **SYSCLK:** The main CPU/System clock
