@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "STM32 #8: Binary, Bitwise Operators, and set/get flags"
-date:   2025-11-02 19:00:00 +0000
+date:   2025-11-02 10:00:00 +0000
 categories: STM32
 ---
 
