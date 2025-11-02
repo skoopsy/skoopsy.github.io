@@ -381,4 +381,4 @@ Sorry about that one, it's a bit anticlimactic isn't it, nothing externally happ
         async>
 </script>
 
-Copyright © 2025 Skoopsy
+Copyright © 2025 David O'Connor

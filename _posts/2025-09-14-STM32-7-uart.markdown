@@ -70,9 +70,9 @@ Now cd up a level and perform the two make commands. You are ready to start writ
 ## Setup the UART module with Libopencm3
 
 The STM32F1x has 3 UART Serial ports attached to PA_2 & PA_3, PB_6 & PB_7, PA_9 & PA_10, and PB_10 & PB_11:
-![Image of board pinout](/docs/assets/img/blog-07-pinout.png)
+![Image of board pinout](/docs/assets/img/bluepill-plus-pinout.png)
 
-Check the exact 5 V-tolerance per pin/mode in the STM32F103 datasheet; UART RX (as input) is generally fine with 5 V-tolerant pins, but don’t drive non-tolerant pins above VDD, the pin out I found here shows a 3.3v limit on Serial2 pins. Plug in the TX pin of your chosing on the bluepill, I will use USART1 at pins PA_9 & PA10.
+Check the exact 5v tolerance per pin/mode in the STM32F103 datasheet; UART RX (as input) is generally fine with 5v tolerant pins, but don’t drive non-tolerant pins above VDD, the pin out I found here shows a 3.3v limit on Serial2 pins. Plug in the TX pin of your chosing on the bluepill, I will use USART1 at pins PA_9 & PA_10.
 
 A summary of the pin assignments:
 - USART1: TX PA9, RX PA10 (APB2)
@@ -162,8 +162,7 @@ Create your main.c file and include the uart header:
 ```
 
 Write a small main loop to send some stuff over uart using the uart_send_String command we made:
-```
-
+```c
 uart_init();
 
 int main(void) {
@@ -212,16 +211,17 @@ It's all printing on one line, but it works! Okay lets move on to trying to make
 [nanoprintf](https://github.com/charlesnicholson/nanoprintf) is a tiny printf library with a reasonably good feature set aimed at embedded devices. This is all packaged into a single drop in file that does not rely on libc and is released with a 0BSD license, which is unconditional and so can be used very freely.
 
 There are 4 main APIs:
-    - npf_snprintf: For use like [snprintf](https://en.cppreference.com/w/c/io/fprintf) from the stanadrd C library.
-        - "Loads the data from the given locations, converts them to character string equivalents and writes the results to a variety of sinks/streams"
-        - snprintf is a safe version of sprintf(), which is used to format strings into a buffer. This version prevents buffer overflows, and guarantees the string is null terminated. 
 
-    - npf_vsnprintf: For use like [vsnprintf](https://en.cppreference.com/w/c/io/vfprintf) from the standard C library
+- npf_snprintf: For use like [snprintf](https://en.cppreference.com/w/c/io/fprintf) from the stanadrd C library.
+    - "Loads the data from the given locations, converts them to character string equivalents and writes the results to a variety of sinks/streams"
+    - snprintf is a safe version of sprintf(), which is used to format strings into a buffer. This version prevents buffer overflows, and guarantees the string is null terminated. 
 
-    - npf_pprintf: For use like printf with per-character write callback. 
-        - This would be used when you do not want to write to a buffer like npf_snprintf but instead to format and send each char immediately, which is great for low-memory systems (Like for UART comms on the STM32F1!)
+- npf_vsnprintf: For use like [vsnprintf](https://en.cppreference.com/w/c/io/vfprintf) from the standard C library
+
+- npf_pprintf: For use like printf with per-character write callback. 
+    - This would be used when you do not want to write to a buffer like npf_snprintf but instead to format and send each char immediately, which is great for low-memory systems (Like for UART comms on the STM32F1!)
     
-    - npf_vpprintf: For use like npf_pprintf but it takes a va_list
+- npf_vpprintf: For use like npf_pprintf but it takes a va_list
 
 For further details checkout nanoprintf on [charles nicholson's github](https://github.com/charlesnicholson/nanoprintf?tab=readme-ov-file).
 
@@ -301,4 +301,4 @@ Run make, then st-flash and you can fire up minicom again and see the result!
         async>
 </script>
 
-Copyright © 2025 Skoopsy
+Copyright © 2025 David O'Connor

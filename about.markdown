@@ -4,4 +4,4 @@ title: About
 permalink: /about/
 ---
 
-Stuff.
+David O'Connor
