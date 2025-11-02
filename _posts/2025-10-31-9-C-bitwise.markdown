@@ -427,13 +427,76 @@ int main (void) {
     return 0;
 }
 ```
-Now it's starting to look like someting for embedded...
 
-# Real registers and real flags: STM32
+# Now it's starting to look embedded...
 
-In STM32, peripheral registers are memory-mapped. You read/write bits to configure hardware or check status flags. CMSIS gives you typed structs (e.g., GPIOA, USART2, RCC) so you can do clean and safe bit operations.
+In STM32, peripheral registers are memory-mapped. You read/write bits to configure hardware or check status flags. CMSIS gives you typed structs (e.g., GPIOA, USART2, RCC) so you can do clean and safe bit operations. Note that in the previous example we have used the pure C binary specifier 0bxx... however for embedded it is typically better to use hex as 0b can be compiler and implementaiton specific.
 
-Summary of post.
+For example, you can directly enable the GPIOA clock via modifying the AHB1ENR register. Everything previous was pure C, below, these will have to be in a STM32 embedded project like the previousblog posts.
+```c
+#include "stm32f1xx.h"
+
+// Enable GPIOA clock by setting the GPIOAEN bit
+RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+
+// Check if it is set by reading the flag
+if (RCC->AHB1ENR & RCC_AHB1ENR_GPIOAEN) {
+    // Do some stuff because the flag is enabled
+}
+```
+
+Or you might want to configure a pin mode by masking a multi-bit field. Many fields are 2 bit slices. For example, each GPIO pin has a 2-bit mode in ```GPIOx->MODER```:
+
+```c
+// Configure PA5 as general-purpose output
+// MODER has 2 bits per pin: 00=input, 01=output, 10=AF, 11=analog.
+GPIOA->MODER &= ~(0x3u << (5 * 2));       // clear the 2-bit field
+GPIOA->MODER |=  (0x1u << (5 * 2));       // set to 01 (output)
+```
+Mask then set is the safest pattern for multi-bit fields.
+
+You can set and clear output bits automatically (BSRR). Writing to GPIOx->BSRR avoids read-modify-write hazards and is atomix on cortex-M:
+
+```c
+// Set PA5 high
+GPIOA->BSRR = (1u << 5);
+
+// Set PA5 low (write to reset upper-half)
+GPIOA->BSRR = (1u << (5*16));
+```
+Avoid GPIOA->ODR |= ... in ISRs or multi-context code, BSRR is better.
+
+You could also do something like read a pin (IDR) and a status flag (USART ISR)
+```c
+
+// Read PA6 input state
+uint32_t pa6 = (GPIOA->IDR >> 6) & 1u;
+
+// USART2: check TXE (transmit data register empty) flag before sending
+if (USART2->ISR & USART_ISR_TXE_TXFNF) {
+    USART2->TDR = 'A'; // write one byte
+}
+```
+
+Some status flags are cleared by writing 1 to a dedicated clear register (e.g., USARTx->ICR). Always check the reference manual’s “flag clearing” table; it varies by flag.
+
+Be careful using pure C bit-fields for registers. They can break with implementation specific layouts, padding, and non-atomic practices. For hardware registers, masks and shifts are the robust and portable way to do it.
+
+Lastly, you can use C macros to define flag utilities to clean up code, for example:
+```c
+#define BIT(n)             (1u << (n))
+#define SET_BITS(reg, m)   ((reg) |= (m))
+#define CLR_BITS(reg, m)   ((reg) &= ~(m))
+#define TST_BITS(reg, m)   (((reg) & (m)) != 0)
+
+// Example: toggle PA5 quickly (not atomic; fine in single context)
+GPIOA->ODR ^= BIT(5);
+```
+
+# Wow, okay, so we have covered:
+- Bitwise AND/OR/XOR/NOT and shifts underpin register work.
+- Using masks to set/clear/test single-bit flags and multi-bit fields.
+- On STM32, using CMSIS registers: RCC->..., GPIOx->MODER, GPIOx->BSRR, USARTx->ISR/TDR/ICR.
 
 <script src="https://utteranc.es/client.js"
         repo="skoopsy/skoopsy.github.io"
