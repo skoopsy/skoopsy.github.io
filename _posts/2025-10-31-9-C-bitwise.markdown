@@ -1,11 +1,11 @@
 ---
 layout: post
-title:  "STM32 #8: Bitwise Operators, Bit fields, and set/get flags"
-date:   2025-09-14 19:00:00 +0000
+title:  "STM32 #8: Binary, Bitwise Operators, and set/get flags"
+date:   2025-11-02 19:00:00 +0000
 categories: STM32
 ---
 
-For embedded C bitwise operators are the key to understanding how to interact with communications protocols, data packets and registers. So to start a revision on binary:
+For embedded C, bitwise operators are the key to understanding how to interact with communications protocols, data packets, and registers. So to start, a whistle stop tour through binary:
 
 The binary system is base two, and so each value can only be stored as two digits; a 1, or a 0. Much like the decimal system (base 10) where there are 10 digits 0-9, to give meaning above the digit 9, a representative meaning is given to the order of the digits. Binary is used because of how information is stored in hardware, it is much easier to store a 1 or 0 than venturing into [trits](https://en.wikipedia.org/wiki/Ternary_numeral_system), [dits](https://en.wikipedia.org/wiki/Hartley_(unit)), or even [qbits](https://en.wikipedia.org/wiki/Qubit) and beyond. So, to count to higher numbers than one, multiple binary digitas are combined and given a representative value based on the digits order in a list. For example, an unsigned 8 bit binary storage list will typically have the attributed values of: 2^7, 2^6, 2^5, 2^4, 2^3, 2^2, 2^1, & 2^0 to each corresponding bit. To represent the unsigned integer 3 in 8bits you might set the 2^0 + 2^1 positions to a 1 and the rest by 0s: 00000011
 
@@ -15,7 +15,7 @@ We've covered the "unsigned" integer, so what if you want to store both negative
 
 Oh dear that was longer than I had planned!
 
-# Moving on to bit wise operators
+# Bit wise operators
 If you have come across logical operators before this will be fairly straight forward for most, instead of the integer, the operand is each bit, and the bitwise operator will run the operator sequentially on every bit that makes up the memory. So hee are the main ones and they are with their corresponding truth tables and unsigned 8bit examples:
 
 **Bitwise AND: &**
@@ -432,8 +432,6 @@ Now it's starting to look like someting for embedded...
 # Real registers and real flags: STM32
 
 In STM32, peripheral registers are memory-mapped. You read/write bits to configure hardware or check status flags. CMSIS gives you typed structs (e.g., GPIOA, USART2, RCC) so you can do clean and safe bit operations.
-
-
 
 Summary of post.
 
