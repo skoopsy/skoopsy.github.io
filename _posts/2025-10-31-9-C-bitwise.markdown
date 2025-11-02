@@ -5,13 +5,13 @@ date:   2025-09-14 19:00:00 +0000
 categories: STM32
 ---
 
-For embedded C bitwise operators and key for understanding how to interact with communications prootocols, data packets and registers. So to start a revision on binary:
+For embedded C bitwise operators are the key to understanding how to interact with communications protocols, data packets and registers. So to start a revision on binary:
 
-The binary system is base two and so each value can only be sotred as two digits, a 1, or a 0 in the binary case, much like the decimal system (base 10) where there are 10 digits 0-9 and to give meaning above the digit 9, a reporesntative meaning is givien to the order of the digits. Binary is used because of how information is stored in hardware, much easier to store a 1 or 0 than venturing into [trits](https://en.wikipedia.org/wiki/Ternary_numeral_system), [dits](https://en.wikipedia.org/wiki/Hartley_(unit)), or even [qbits](https://en.wikipedia.org/wiki/Qubit) and beyond. So to count to higher numbers than one, multiple binary digitas are combined and given a representative value based on the digits order in a list, for example a 8bit binary storage list will typically have the attributed values of: 7^2, 6^2, 5^2, 4^2, 3^2, 2^2, 1^2, & 0^2 to each corresponding bit. To represent the unsigned integer 3 in 8bits you might set the 0^2 + 1^2 positions to a 1 and the rest by 0s: 00000011
+The binary system is base two, and so each value can only be stored as two digits; a 1, or a 0. Much like the decimal system (base 10) where there are 10 digits 0-9, to give meaning above the digit 9, a representative meaning is given to the order of the digits. Binary is used because of how information is stored in hardware, it is much easier to store a 1 or 0 than venturing into [trits](https://en.wikipedia.org/wiki/Ternary_numeral_system), [dits](https://en.wikipedia.org/wiki/Hartley_(unit)), or even [qbits](https://en.wikipedia.org/wiki/Qubit) and beyond. So, to count to higher numbers than one, multiple binary digitas are combined and given a representative value based on the digits order in a list. For example, an unsigned 8 bit binary storage list will typically have the attributed values of: 2^7, 2^6, 2^5, 2^4, 2^3, 2^2, 2^1, & 2^0 to each corresponding bit. To represent the unsigned integer 3 in 8bits you might set the 2^0 + 2^1 positions to a 1 and the rest by 0s: 00000011
 
-Are you a big-endian or a little-endian? Wait waittt.... I don't want to know, reality doesn't exist until you measure it right, Schrodingers cat and all. [Endianness](https://en.wikipedia.org/wiki/Endianness) is arbitrary. For this post big-endianess, is assumed; The most significant bit is first, so for a 8 bit unsigned integer such as the number 3 the binary is 00000011 also denoted as 0b11 in C and 119 is is 01110111. Under this regiem with 8 bits, the range of unsigned integers you can store will be from 0 to 255.
+Are you a big-endian or a little-endian? Wait waittt.... I don't want to know, reality doesn't exist until you measure it right, Schrodingers cat and all. [Endianness](https://en.wikipedia.org/wiki/Endianness) is arbitrary. For this post big-endianness, is assumed; The most significant bit is first, so for a 8 bit unsigned integer such as the number 3 the binary is 00000011, also denoted as 0b11 in C23, and 119 is 01110111. Under this regime with 8 bits, the range of unsigned integers you can store will be from 0 to 255.
 
-ey? We've covered the "unsigned" integer, so what if you want to store both negative and positive numbers? You can use the [Twos compliment](https://en.wikipedia.org/wiki/Two%27s_complement) convention; where the largest significant bit (the first one in big-endian convention) is used to denote if the integer is a positive or negative. This changes the amount of numbers than can be represented compared to an equivalent sized unsigned memory. See if you can workout the range of values if the most significant bit is used for the polarity and not for 2^7:  Did you get -127 to 127? Wrong, you didn't read the wiki did you! That would be the [One's compliment](https://en.wikipedia.org/wiki/Ones%27_complement) convention. In twos compliment 0 is only represented once, this is done by representing negative numbers by taking the bit compliments of their magnitude (flipping all the bits) and adding 1, for example an 8bit signed int 6 is represented as 00000110, the additonal bits are padded with zeros for positive numbers and 1s for negative numbers, so -6 is represented as 11111010. This way an extra number can be squeezed into the - side bringing the range of numbers to: -128 to 127 for a signed 8bit int.
+We've covered the "unsigned" integer, so what if you want to store both negative and positive numbers? You can use the [Two's compliment](https://en.wikipedia.org/wiki/Two%27s_complement) convention; where the most significant bit (the first one in big-endian convention) is used to denote if the integer is a positive or negative. This changes the amount of numbers than can be represented compared to an equivalent sized unsigned memory. See if you can work out the range of values if the most significant bit is used for the polarity and not for 2^7:  Did you get -127 to 127? Wrong, you didn't read the wiki did you! That would be the [One's compliment](https://en.wikipedia.org/wiki/Ones%27_complement) convention. In twos compliment 0 is only represented once, this is done by representing negative numbers by taking the bit compliments of their magnitude (flipping all the bits) and adding 1, for example an 8bit signed int 6 is represented as 00000110, the additional bits are padded with zeros for positive numbers and 1s for negative numbers, so -6 is represented as 11111010. This way an extra number can be squeezed into the - side bringing the range of numbers to: -128 to 127 for a signed 8bit int.
 
 Oh dear that was longer than I had planned!
 
@@ -19,60 +19,64 @@ So moving on to bit wise operators, if you have come across logical operators be
 
 **Bitwise AND: &**
 If both bits being compared match then a 1 is produced, if not then produce a zero.
-
+```
 A   B   =  A&B
-0   0   =   1
+0   0   =   0
 1   0   =   0
 0   1   =   0
 1   1   =   1
-
+```
 Example:
+```
 A   = 00000011 = 3
 B   = 00001001 = 9
 A&B = 00000001 = 1
-
+```
 
 **Bitwise OR: |**
 Logical inclusive OR operation on each pair of bits. If both bits are zero the result is 0, otherwise it is one:
-
+```
 A   B   =  A|B
 0   0   =   0
 1   0   =   1
 0   1   =   1
 1   1   =   1
-
+```
 Example:
+```
 A   = 00000011 = 3
 B   = 00001001 = 9
 A|B = 00001011 = 11
-
+```
 
 **Bitwise XOR: ^**
 Logical exclusive OR operation on each pair of bits. If both bits are zero, or both are 1 the result is 0, otherwise it is one:
-
+```
 A   B   =  A^B
 0   0   =   0
 1   0   =   1
 0   1   =   1
 1   1   =   0
-
+```
 Example:
+```
 A   = 00000011 = 3
 B   = 00001001 = 9
 A|B = 00001010 = 10
-
+```
 
 **Bitwise NOT: ~**
 Also known as the bitwise compliment which flips all the bits to the opposite value; A 1 becomes a 0, and a 0 becomes a 1.
-
+```
 A   =  ~A
 0   =   1
 1   =   0
-
+```
 Example:
+```
 A   = 00000011 = 3
 ~ A = 11111100 = 252
-
+```
 Notice the resultant decimal number is 255 (the max possible respresentation) - 3 = 252
 
 
@@ -80,37 +84,51 @@ Notice the resultant decimal number is 255 (the max possible respresentation) - 
 Shift all bits left (increase) by n places, bits that shift past the bounds of the register are discarded
 
 Example:
+```
 A      = 00000011 = 3
 A << 1 = 00000110 = 6
 A << 2 = 00001100 = 12
 A << 9 = 
+```
 
-Each position the value is shifted to the left, the value doubles, or the value is multiplied by 2**n, as long as it does not exceed (overflow) the register max bit range. This requires less compute than a typical multiplication routine. Where the end bit, big or small, moves into the register a 0 is initialised in the now "empty" spot. There are excpetions for signed integers where the sign bit is preserved.
+Each position the value is shifted to the left, the value doubles, or the value is multiplied by 2**n, as long as it does not exceed (overflow) the register max bit range. This requires less compute than a typical multiplication routine. Where the end bit, big or small, moves into the register a 0 is initialised in the now "empty" spot. There are exceptions for signed integers where the sign bit is preserved.
 
 
 **Bitwise shift right >> n**
 Like the left shift but shift all bits right (decrease) by n places.
 
 Example:
+```
 A      = 00000011 = 3
 A >> 1 = 00000001 = 1
 A >> 2 = 00000000 = 0
+```
 
-Each position that the value is shifted to the right, the value halfs.
+Each position that the value is shifted to the right, the value halves.
 
 basics: https://www.youtube.com/watch?v=BGeOwlIGRGI
 Use for embedded: https://www.youtube.com/watch?v=6hnLMnid1M0
 
 **Types of shifts:**
-Ends are always contentious. Above we described the arithmetic shift, there is also the logcal shift, briefly refered to earlier, where instead of shifting in 0s at the edges of the register, 1s are shifted in (as in the signed example). Lastly, there is the circular shift, there the bits leaving the register are circulated back to the other end:
+Ends are always contentious! Above we described arithmetic shifting, where signed integers keep their sign bit when shifted right. The counterpart is the logical shift, used for unsigned integers, which always fills new bits with zeros regardless of sign.
 
-Example
-A      = 00000011 = 3
-A >> 1 = 10000001 = 129
-A >> 8 = 11000000 = 192
-A << 9 = 10000001 = 129
+There’s also the circular (or rotate) shift, where bits that fall off one end of the register are wrapped around to the other side. This is less common in standard C but widely used in embedded systems, cryptography, and signal processing.
 
-Now we know bitshifts, we can write a function in C that can represent a register in binary. 
+Example of an 8-bit circular shift:
+```
+A      = 00000011  (3)
+A >> 1 = 10000001  (rotated right)
+A << 1 = 00000110  (regular logical left shift)
+```
+The rotation shown above is illustrative and C’s >> and << operators do not rotate.
+
+In contrast, an arithmetic right shift on a signed number would preserve the sign bit:
+```
+A = 11111000  (-8)
+A >> 1 = 11111100  (-4)
+```
+
+Now we know bit shifts, we can write a function in C that can represent a register in binary. 
 
 Start with the basic template:
 
@@ -122,10 +140,10 @@ int main (void) {
 }
 ```
 
-Now lets write a function which will take an input register and print the bits, placing this above the main function, we start with a function that takes the register variable as an uint8_t, so an unsigned 8bit integer, then inside a for loop, for each bit in the register, from largest, to smallest, we will left bitshift the register by that position to bring it to the lest significant bit position, then & it with 1 (00000001) and print the result, if there is a 1 in the register at that position the result will be a decimal 1, if there is not a 1 the result will be a decimal 0, then we print that result before iterating the loop for all 8 bits:
+Now lets write a function which will take an input register and print the bits, placing this above the main function, we start with a function that takes the register variable as an uint8_t, so an unsigned 8bit integer type, then inside a for loop, for each bit in the register, from largest, to smallist, we will right bit shift the register by that position to bring it to the least significant bit position, then & it with 1 (00000001) and print the result, if there is a 1 in the register at that position the result will be a decimal 1, if there is not a 1 the result will be a decimal 0, then we print that result before iterating the loop for all 8 bits:
 
 ```c
-#include <stdint.c> // reveals the uint8_t data type for our 8bit register
+#include <stdint.h> // reveals the uint8_t data type for our 8bit register
 
 void printBinary(uint8_t aRegister) {
     for (int i = 7; i>=0; i--) {
@@ -168,15 +186,17 @@ Result:
 
 **How might it be useful for embedded... flags**
 
-You can take a 8bit register and store 8 flags inside it to denote a configuration in a memory and communication in efficient manner for example. You can use the bitwise operators discussed to set and read flags stored in this way much like the previous example.
+Now that we can print bits, let’s see how to use them — flags are where bit-level logic becomes truly practical. You can take a 8bit register and store 8 flags inside it to denote a configuration in a memory and communication in efficient manner for example. You can use the bitwise operators discussed to set and read flags stored in this way much like the previous example.
 
-Lets say you have a 8bit register holding the unsigned decimal value 2: 00000010. Now you want to find out if the 2**1 bit is a 1 or a 0. This one is simple, as all other bits are 0, so if you take another register that holds a single bit at 2**1 bit and bitwise AND (&) it with the original register if both bits are 1, the result will also be 1, and a decimal value of 2 in this case:
+Lets say you have a 8bit register holding the unsigned decimal value 2: 00000010. Now you want to find out if the 2^1 bit is a 1 or a 0. This one is simple, as all other bits are 0, so if you take another register that holds a single bit at 2^1 bit and bitwise AND (&) it with the original register if both bits are 1, the result will also be 1, and a decimal value of 2 in this case:
 
+```
 flag_register                  = 00000010 = 2;
 check_for_flag                 = 00000010 = 2;
 flag_register & check_for_flag = 00000010 = 2;
+```
 
-Lets setup a basic C program to implement this, we will include the printBinary function we developed earlier for help visualising the binary, set a flags register to the decial value 54, then check the first two lest significant bits as the first and second flag let print if they are enabled or not:
+Lets setup a basic C program to implement this, we will include the printBinary function we developed earlier for help visualising the binary, set a flags register to the decimal value 54, then check the first two lest significant bits as the first and second flag let print if they are enabled or not:
 
 ```c
 
@@ -192,7 +212,7 @@ void printBinary(uint8_t aRegister) {
 
 int main (void) {
 
-    uint8_t flags = 54; // 00110110
+    uint8_t flags = 54; // binary: 00110110
     printf("Flags: ");
     printBinary(flags);
 
@@ -206,7 +226,7 @@ int main (void) {
         printf("Flag 2 - enabled\n");
     }
     else if ((flags & 2) == 0) {
-        printf("Flag 2 - disables\n");
+        printf("Flag 2 - disabled\n");
     }
 
     return 0;
@@ -214,15 +234,15 @@ int main (void) {
 
 ```
 
-Now this works because decimal 2 = 00000010, and decimal 1 is 00000001. So when we bitwise & these with the flag register they will only check for those positions. If you try this with the value 3 however, you will notice that it will now bitwise & sucessfully both 1 and 2, resulting in a decimal value of three. So this approach doesn't quite scale for checking all of the bits. Lets write a checker which can scale a bit better and put it in its own function above main. We will do this by utilising the same method as the printBinary function, by left shifting the register to check the bit position against the decimal value 1 (0000001) with a bitwise &:
+Now this works because decimal 2 = 00000010, and decimal 1 is 00000001. So when we bitwise & these with the flag register they will only check for those positions. If you try this with the value 3 however, you will notice that it will now bitwise & successfully both 1 and 2, resulting in a decimal value of three. So this approach doesn't quite scale for checking all of the bits. Lets write a checker which can scale a bit better and put it in its own function above main. We will do this by utilising the same method as the printBinary function, by left shifting the register to check the bit position against the decimal value 1 (0000001) with a bitwise &:
 
 ```c
-void checkFlag(int flag, uint8_t flagRegister) {
-    if ((flagRegister >> flag & 1) == 0) {
-        printf("Flag: %i - disabled\n", flag);
+void checkFlag(int bit, uint8_t flagRegister) {
+    if ((flagRegister >> bit & 1) == 0) {
+        printf("Flag: %i - disabled\n", bit);
     }
     else {
-        printf("Flag: %i - enabled\n", flag);
+        printf("Flag: %i - enabled\n", bit);
     }
 }
 ```
@@ -270,12 +290,12 @@ void printBinary(uint8_t aRegister) {
     printf("\n");
 }
 
-void checkFlag(int flag, uint8_t flagRegister) {
-    if ((flagRegister >> flag & 1) == 0) {
-        printf("Flag: %i - disabled\n", flag);
+void checkFlag(int bit, uint8_t flagRegister) {
+    if ((flagRegister >> bit & 1) == 0) {
+        printf("Flag: %i - disabled\n", bit);
     }
     else {
-        printf("Flag: %i - enabled\n", flag);
+        printf("Flag: %i - enabled\n", bit);
     }
 }
 
@@ -323,7 +343,7 @@ Flag: 7 - disabled
 
 With this type of set statement we can compound the bitwise OR to set multiple flags in one line if we so wish, setting ``` flags = flags | 0b1 | 0b1000 | 0b1000000;``` for example should now result in a new flag register of 01111111, give it a try!
 
-What is you want to disable a flag?  Lets take the 0b1000 flag at position 3**2 bit.
+What is you want to disable a flag?  Lets take the 0b1000 flag at position 2^3 bit.
 
 flags = 0b01111111
 flag3 = 0b00001000
@@ -341,22 +361,22 @@ rather than bitwise OR these two together to enable the bit, we can NOT the flag
     }
 ```
 
-Furthermore this can be compounded to disable multiple flags as the same time.
+Furthermore this can be compounded to disable multiple flags at the same time.
 
-Finally trying to remeber the binary for each flag gets a bit tough and is not very readable so we can modify the code to use macros for each flag which makes the whole procedure much easier to read now we understand what is happening under the hood, here is the final code:
+Finally trying to remember the binary for each flag gets a bit tough and is not very readable so we can modify the code to use macros for each flag which makes the whole procedure much easier to read now we understand what is happening under the hood, here is the final code:
 
 ```
 #include <stdio.h>
 #include <stdint.h>
 
-#define FLAG_0 0b1;
-#define FLAG_1 0b10;
-#define FLAG_2 0b100;
-#define FLAG_3 0b1000;
-#define FLAG_4 0b10000;
-#define FLAG_5 0b100000;
-#define FLAG_6 0b1000000;
-#define FLAG_7 0b10000000;
+#define FLAG_0 0b00000001
+#define FLAG_1 0b00000010
+#define FLAG_2 0b00000100
+#define FLAG_3 0b00001000
+#define FLAG_4 0b00010000
+#define FLAG_5 0b00100000
+#define FLAG_6 0b01000000
+#define FLAG_7 0b10000000
 
 void printBinary(uint8_t aRegister) {
     for (int i = 7; i>=0; i--) {
@@ -365,12 +385,12 @@ void printBinary(uint8_t aRegister) {
     printf("\n");
 }
 
-void checkFlag(int flag, uint8_t flagRegister) {
-    if ((flagRegister >> flag & 1) == 0) {
-        printf("Flag: %i - disabled\n", flag);
+void checkFlag(int bit, uint8_t flagRegister) {
+    if ((flagRegister >> bit & 1) == 0) {
+        printf("Flag: %i - disabled\n", bit);
     }
     else {
-        printf("Flag: %i - enabled\n", flag);
+        printf("Flag: %i - enabled\n", bit);
     }
 }
 
@@ -407,11 +427,20 @@ int main (void) {
     return 0;
 }
 ```
+Now it's starting to look like someting for embedded...
+
+Real registers and real flags: STM32
+
+In STM32, peripheral registers are memory-mapped. You read/write bits to configure hardware or check status flags. CMSIS gives you typed structs (e.g., GPIOA, USART2, RCC) so you can do clean and safe bit operations.
+
+
+
+Summary of post.
 
 <script src="https://utteranc.es/client.js"
         repo="skoopsy/skoopsy.github.io"
         issue-term="pathname"
-        label="blog-embedded7"
+        label="blog-embedded9"
         theme="preferred-color-scheme"
         crossorigin="anonymous"
         async>
