@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "STM32 #8: USB Communication"
-date:   2025-09-14 19:00:00 +0000
+date:   2025-12-14 19:00:00 +0000
 categories: STM32
 ---
 
@@ -100,6 +100,7 @@ Not going to get into USB-C power delivery here. For USB2.0 can supply up to 500
 
 # The actual USB2.0 communication protocol
 
+ 
 
 <script src="https://utteranc.es/client.js"
         repo="skoopsy/skoopsy.github.io"
