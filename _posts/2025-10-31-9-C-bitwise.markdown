@@ -19,7 +19,8 @@ Oh dear that was longer than I had planned!
 If you have come across logical operators before this will be fairly straight forward for most, instead of the integer, the operand is each bit, and the bitwise operator will run the operator sequentially on every bit that makes up the memory. So hee are the main ones and they are with their corresponding truth tables and unsigned 8bit examples:
 
 **Bitwise AND: &**
-If both bits being compared match then a 1 is produced, if not then produce a zero.
+If both bits being compared are 1 then a 1 is produced, if not then produce a zero.
+
 ```
 A   B   =  A&B
 0   0   =   0
@@ -75,7 +76,7 @@ A   =  ~A
 ```
 Example:
 ```
-A   = 00000011 = 3
+  A = 00000011 = 3
 ~ A = 11111100 = 252
 ```
 Notice the resultant decimal number is 255 (the max possible respresentation) - 3 = 252
@@ -89,7 +90,6 @@ Example:
 A      = 00000011 = 3
 A << 1 = 00000110 = 6
 A << 2 = 00001100 = 12
-A << 9 = 
 ```
 
 Each position the value is shifted to the left, the value doubles, or the value is multiplied by 2**n, as long as it does not exceed (overflow) the register max bit range. This requires less compute than a typical multiplication routine. Where the end bit, big or small, moves into the register a 0 is initialised in the now "empty" spot. There are exceptions for signed integers where the sign bit is preserved.
@@ -106,9 +106,6 @@ A >> 2 = 00000000 = 0
 ```
 
 Each position that the value is shifted to the right, the value halves.
-
-basics: https://www.youtube.com/watch?v=BGeOwlIGRGI
-Use for embedded: https://www.youtube.com/watch?v=6hnLMnid1M0
 
 **Types of shifts:**
 Ends are always contentious! Above we described arithmetic shifting, where signed integers keep their sign bit when shifted right. The counterpart is the logical shift, used for unsigned integers, which always fills new bits with zeros regardless of sign.
@@ -140,7 +137,7 @@ int main (void) {
 }
 ```
 
-Write a function which will take an input register and print the bits, placing this above the main function. We start with a function that takes the register variable as an ```uint8_t``` from ```<stfint.h>```, so an unsigned 8 bit integer type. Then inside a for loop, for each bit in the register, from largest, to smallist, we will right bit shift the register by that position to bring it to the least significant bit position, then & it with 1 (00000001) and print the result. If there is a 1 in the register at that position the result will be a decimal 1, if there is not a 1 the result will be a decimal 0. Then we print that result before iterating the loop for all 8 bits:
+Write a function which will take an input register and print the bits, placing this above the main function. We start with a function that takes the register variable as an ```uint8_t``` from ```<stdint.h>```, so an unsigned 8 bit integer type. Then inside a for loop, for each bit in the register, from largest, to smallist, we will right bit shift the register by that position to bring it to the least significant bit position, then & it with 1 (00000001) and print the result. If there is a 1 in the register at that position the result will be a decimal 1, if there is not a 1 the result will be a decimal 0. Then we print that result before iterating the loop for all 8 bits:
 
 ```c
 #include <stdint.h> // reveals the uint8_t data type for our 8bit register
@@ -196,7 +193,7 @@ check_for_flag                 = 00000010 = 2;
 flag_register & check_for_flag = 00000010 = 2;
 ```
 
-Lets setup a basic C program to implement this, we will include the printBinary function we developed earlier for help visualising the binary, set a flags register to the decimal value 54, then check the first two lest significant bits as the first and second flag let print if they are enabled or not:
+Lets setup a basic C program to implement this, we will include the printBinary function we developed earlier for help visualising the binary, set a flags register to the decimal value 54, then check the first two least significant bits as the first and second flag and print if they are enabled or not:
 
 ```c
 
@@ -234,7 +231,7 @@ int main (void) {
 
 ```
 
-Now this works because decimal 2 = 00000010, and decimal 1 is 00000001. So when we bitwise & these with the flag register they will only check for those positions. If you try this with the value 3 however, you will notice that it will now bitwise & successfully both 1 and 2, resulting in a decimal value of three. So this approach doesn't quite scale for checking all of the bits. Lets write a checker which can scale a bit better and put it in its own function above main. We will do this by utilising the same method as the printBinary function, by left shifting the register to check the bit position against the decimal value 1 (0000001) with a bitwise &:
+Now this works because decimal 2 = 00000010, and decimal 1 is 00000001. So when we bitwise & these with the flag register they will only check for those positions. If you try this with the value 3 however, you will notice that it will now bitwise & successfully both 1 and 2, resulting in a decimal value of three. So this approach doesn't quite scale for checking all of the bits. Lets write a checker which can scale a bit better and put it in its own function above main. We will do this by utilising the same method as the printBinary function, by right shifting the register to check the bit position against the decimal value 1 (0000001) with a bitwise &:
 
 ```c
 void checkFlag(int bit, uint8_t flagRegister) {
@@ -276,6 +273,7 @@ Flag: 5 - enabled
 Flag: 6 - disabled
 Flag: 7 - disabled
 ```
+I used sizeof here to make the function potentially more scaleable. Keep in mind that sizeof reports the number of bytes, not bits, considering there are 8 bits in a byte, I have multiplied the value by 8.
 
 Here is the full code:
 
@@ -312,7 +310,9 @@ int main (void) {
 }
 ```
 
-Lets change some flags now then, we will do this by using a bitwise or, and rather that using the decimal values will will use direct binary represention using the 0b prefix, so the decimal value 2 = 0b10, 3 = 0b11, 4 = 0b100, etc:
+# Enabling Flags
+
+We will do this by using a bit wise OR operator, and rather that using the decimal values we will use direct binary represention using the 0b prefix (Only supported in C23 and greater), so the decimal value 2 = 0b10, 3 = 0b11, 4 = 0b100, etc:
 
 To set flag 0 from 0 to 1, without impacting the other flag bits, we simply bitwise OR it with 0b1, add this to the end of the main loop:
 
@@ -343,12 +343,13 @@ Flag: 7 - disabled
 
 With this type of set statement we can compound the bitwise OR to set multiple flags in one line if we so wish, setting ``` flags = flags | 0b1 | 0b1000 | 0b1000000;``` for example should now result in a new flag register of 01111111, give it a try!
 
-What is you want to disable a flag?  Lets take the 0b1000 flag at position 2^3 bit.
+# Disabling Flags
+What if you want to disable a flag?  Lets take the 0b1000 flag at position 2^3 bit.
 
 flags = 0b01111111
 flag3 = 0b00001000
 
-rather than bitwise OR these two together to enable the bit, we can NOT the flag 3 representation to flip all the bits ```~flag3`` which will result in 0b11110111 and then bitwise & that with the flags register. This result is that if the flag 3 bit was enabled it will now be set to 0, additionally all other bits will be left unchanged. Here is the code, have a go:
+Rather than bit wise OR these two together to enable the bit, we can NOT flag3 to flip all the bits: ```~flag3``` which will result in 0b11110111, and then bit wise & that with the flags register. The result is that if the flag 3 bit was enabled - it will now be set to 0. Additionally, all other bits will be left unchanged. Here is the code, have a go:
 
 ```c
     printf("\nDisabling flag 3...\n");
@@ -361,11 +362,13 @@ rather than bitwise OR these two together to enable the bit, we can NOT the flag
     }
 ```
 
+# Macros
+
 Furthermore this can be compounded to disable multiple flags at the same time.
 
 Finally trying to remember the binary for each flag gets a bit tough and is not very readable so we can modify the code to use macros for each flag which makes the whole procedure much easier to read now we understand what is happening under the hood, here is the final code:
 
-```
+```c
 #include <stdio.h>
 #include <stdint.h>
 
@@ -455,16 +458,32 @@ GPIOA->MODER |=  (0x1u << (5 * 2));       // set to 01 (output)
 ```
 Mask then set is the safest pattern for multi-bit fields.
 
-You can set and clear output bits automatically (BSRR). Writing to GPIOx->BSRR avoids read-modify-write hazards and is atomix on cortex-M:
+# Bit Set/Reset Register
 
+You can set and clear output bits automatically with the Bit Set/Reset Register (BSRR). Writing to GPIOx->BSRR avoids read-modify-write issue like rae conditions and is atomic on Cortex-M. The GPIOx_BSRR register is a 32-bit write only register which is divided into two halves; 
+
+Bits 0-15 are set bits, writing a 1 sets the corresponding output bit to 1 or HIGH.
+
+Bits 16-31 are reset bits, writing a 1 sets the corresponding output bit to 0 or LOW.
+
+The  See RM0008 for more details on the BSRR. Here is an example of seting and resetting the PA5 pin on GPIOA:
 ```c
 // Set PA5 high
 GPIOA->BSRR = (1u << 5);
 
 // Set PA5 low (write to reset upper-half)
-GPIOA->BSRR = (1u << (5*16));
+GPIOA->BSRR = (1u << (5 + 16));
 ```
-Avoid GPIOA->ODR |= ... in ISRs or multi-context code, BSRR is better.
+
+Avoid using GPIOA->ODR |= in ISRs or multi-context code. BSRR is better for this. If using libopencm3, the BSRR is utilised by the gpio_set() and gpio_clear() functions making them atomic and safe to use. For example if you executed ```c gpio_set(GPIOA, GPIO5)``` it would employ ```c GPIO_BSRR = (1 << 5)``` to set bit 5 in the BSRR register. However with your knowledge of bitwise operators now you could do something like set a bunch of pins at the same time with the bit wise OR:
+
+```c
+gpio_set(GPIOA, GPIO5 | GPIO6 | GPIO7); // sets PA5, PA6, and PA7
+```
+
+Those GPIOx constants are just bit masks like the FLAG_x masks from earlier,
+
+More often though you might need to manipulate some of the less abstracted registers such as the Reset and Clock Control (RCC), External interrupts (EXTI), Alternate function remapping (AFIO), and the Interrup enable bits (NVIC).
 
 You could also do something like read a pin (IDR) and a status flag (USART ISR)
 ```c
@@ -482,16 +501,6 @@ Some status flags are cleared by writing 1 to a dedicated clear register (e.g., 
 
 Be careful using pure C bit-fields for registers. They can break with implementation specific layouts, padding, and non-atomic practices. For hardware registers, masks and shifts are the robust and portable way to do it.
 
-Lastly, you can use C macros to define flag utilities to clean up code, for example:
-```c
-#define BIT(n)             (1u << (n))
-#define SET_BITS(reg, m)   ((reg) |= (m))
-#define CLR_BITS(reg, m)   ((reg) &= ~(m))
-#define TST_BITS(reg, m)   (((reg) & (m)) != 0)
-
-// Example: toggle PA5 quickly (not atomic; fine in single context)
-GPIOA->ODR ^= BIT(5);
-```
 
 # Wow, okay, so we have covered:
 - Bitwise AND/OR/XOR/NOT and shifts underpin register work.
