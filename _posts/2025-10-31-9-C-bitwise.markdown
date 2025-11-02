@@ -15,7 +15,8 @@ We've covered the "unsigned" integer, so what if you want to store both negative
 
 Oh dear that was longer than I had planned!
 
-So moving on to bit wise operators, if you have come across logical operators before this will be fairly straight forward for most, instead of the integer, the operand is each bit, and the bitwise operator will run the operator sequentially on every bit that makes up the memory. So hee are the main ones and they are with their corresponding truth tables and unsigned 8bit examples:
+# Moving on to bit wise operators
+If you have come across logical operators before this will be fairly straight forward for most, instead of the integer, the operand is each bit, and the bitwise operator will run the operator sequentially on every bit that makes up the memory. So hee are the main ones and they are with their corresponding truth tables and unsigned 8bit examples:
 
 **Bitwise AND: &**
 If both bits being compared match then a 1 is produced, if not then produce a zero.
@@ -128,9 +129,8 @@ A = 11111000  (-8)
 A >> 1 = 11111100  (-4)
 ```
 
-Now we know bit shifts, we can write a function in C that can represent a register in binary. 
-
-Start with the basic template:
+# Registers
+Now we know bit shifts, we can write a function in C that can represent a register in binary. Start with the basic template:
 
 ```c
 #include <stdio.h>
@@ -140,7 +140,7 @@ int main (void) {
 }
 ```
 
-Now lets write a function which will take an input register and print the bits, placing this above the main function, we start with a function that takes the register variable as an uint8_t, so an unsigned 8bit integer type, then inside a for loop, for each bit in the register, from largest, to smallist, we will right bit shift the register by that position to bring it to the least significant bit position, then & it with 1 (00000001) and print the result, if there is a 1 in the register at that position the result will be a decimal 1, if there is not a 1 the result will be a decimal 0, then we print that result before iterating the loop for all 8 bits:
+Write a function which will take an input register and print the bits, placing this above the main function. We start with a function that takes the register variable as an ```uint8_t``` from ```<stfint.h>```, so an unsigned 8 bit integer type. Then inside a for loop, for each bit in the register, from largest, to smallist, we will right bit shift the register by that position to bring it to the least significant bit position, then & it with 1 (00000001) and print the result. If there is a 1 in the register at that position the result will be a decimal 1, if there is not a 1 the result will be a decimal 0. Then we print that result before iterating the loop for all 8 bits:
 
 ```c
 #include <stdint.h> // reveals the uint8_t data type for our 8bit register
@@ -153,7 +153,7 @@ void printBinary(uint8_t aRegister) {
 }
 ```
 
-Now back in the main loop lets set a value and call the print binary function:
+Back in the main loop lets set a value and call the print binary function:
 
 ```c
 uint8_t aRegister = 54;
@@ -184,7 +184,7 @@ Result:
 >>> 00110110
 ```
 
-**How might it be useful for embedded... flags**
+# How might it be useful for embedded... flags
 
 Now that we can print bits, let’s see how to use them — flags are where bit-level logic becomes truly practical. You can take a 8bit register and store 8 flags inside it to denote a configuration in a memory and communication in efficient manner for example. You can use the bitwise operators discussed to set and read flags stored in this way much like the previous example.
 
@@ -429,7 +429,7 @@ int main (void) {
 ```
 Now it's starting to look like someting for embedded...
 
-Real registers and real flags: STM32
+# Real registers and real flags: STM32
 
 In STM32, peripheral registers are memory-mapped. You read/write bits to configure hardware or check status flags. CMSIS gives you typed structs (e.g., GPIOA, USART2, RCC) so you can do clean and safe bit operations.
 
