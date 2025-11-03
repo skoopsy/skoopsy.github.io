@@ -19,7 +19,7 @@ Converting binary to decimal:       0*(2**7) + 0*(2**6) + 0*(2**5) + 0*(2**4) + 
 **Are you a big-endian or a little-endian?** <br>
 Wait waittt.... I don't want to know, reality doesn't exist until you measure it right, Schrodingers cat and all. [Endianness](https://en.wikipedia.org/wiki/Endianness) is arbitrary. For this post big-endianness is assumed; The most significant bit is first, so for a 8 bit unsigned integer that would be the 2<sup>7</sup> bit, and the 2<sup>0</sup> bit is last. For example, the decimal number 3 in big-endian 8 bit unsigned binary is ```00000011```, which can also be specified using the binary specifier ```0b``` as ```0b11``` in C23 where the big-endian convention is assumed. Another example would be decimal 119 is equivalent to ```01110111``` in binary, have a go! Under this regime with 8 bits, the range of unsigned integers you can store will be from 0 to 255.
 
-**Signed integers**
+**Signed integers** <br>
 We've covered the "unsigned" integer, so what if you want to store both negative and positive numbers? You can use the [Two's compliment](https://en.wikipedia.org/wiki/Two%27s_complement) convention; where the most significant bit (the first one in big-endian convention) is used to denote if the integer is a positive or negative. This changes the amount of numbers than can be represented compared to an equivalent sized unsigned integer. See if you can work out the range of values if the most significant bit is used for the polarity and not for 2<sup>7</sup>...  Did you get -127 to 127?... Wrong, you didn't read the wiki did you! That would be the [One's compliment](https://en.wikipedia.org/wiki/Ones%27_complement) convention.
 
 In Two's Compliment zero is represented only once. Negative numbers are formed by taking the bit compliment (flipping all the bits) of the positive number's magnitude and then adding 1. For example, an 8 bit signed int decimal 6:
@@ -260,7 +260,7 @@ int main (void) {
 
 ```
 
-Now this works because decimal 2 is 00000010 in binary, and decimal 1 is 00000001 in binary. So when we bitwise & these with the flag register they will only check for those positions. If you try this with the value 3 however, you will notice that it will now bitwise & successfully both 1 and 2, resulting in a decimal value of three. So this approach doesn't quite scale for checking all of the bits independently. Lets write a checker which can scale a bit better (...sorry) and put it in its own function above main. We will do this by utilising the same method as the printBinary function; by right shifting the register to check the bit position against the decimal value 1 (0000001) with a bitwise &:
+Now this works because decimal 2 is 00000010 in binary, and decimal 1 is 00000001 in binary. So when we bitwise & these with the flag register they will only check for those positions. If you try this with the value 3 however, you will notice that it will now bitwise & successfully both 1 and 2, resulting in a decimal value of three. So this approach doesn't quite scale for checking all of the bits independently. Lets write a checker which can scale a bit better (...sorry) and put it in its own function above main. We will do this by utilising the same method as the printBinary function; by right shifting the register so that the bit we want to check is shifted to the lest significant bit position and compared against a decimal 1 (0000001) with a bitwise &, if the bit being check is a 1 then the result is 1, otherwise it is 0:
 
 ```c
 void checkFlag(int bit, uint8_t flagRegister) {
@@ -504,7 +504,7 @@ GPIOA->BSRR = (0x1u << 5);
 GPIOA->BSRR = (0x1u << (5 + 16));
 ```
 
-Avoid using ```GPIOA->ODR |= ...``` in ISRs or multi-context code. BSRR is better for this. If using libopencm3, the BSRR is utilised by the ```gpio_set()``` and ```gpio_clear()``` functions making them atomic and safe to use. For example if you executed ```c gpio_set(GPIOA, GPIO5)``` it would employ ```c GPIO_BSRR = (0x1u << 5)``` to set bit 5 in the BSRR register. However with your knowledge of bitwise operators now you could do something like set a bunch of pins at the same time with the bit wise OR:
+Avoid using ```GPIOA->ODR |= ...``` in ISRs or multi-context code. BSRR is better for this. If using libopencm3, the BSRR is utilised by the ```gpio_set()``` and ```gpio_clear()``` functions making them atomic and safe to use. For example if you executed ```gpio_set(GPIOA, GPIO5)``` it would employ ```GPIO_BSRR = (0x1u << 5)``` to set bit 5 in the BSRR register. However with your knowledge of bitwise operators now you could do something like set a bunch of pins at the same time with the bit wise OR:
 
 ```c
 gpio_set(GPIOA, GPIO5 | GPIO6 | GPIO7); // sets PA5, PA6, and PA7
@@ -525,7 +525,7 @@ if (USART2->ISR & USART_ISR_TXE_TXFNF) {
 }
 ```
 
-Be careful using pure C bit-fields for registers. They can break with implementation specific layouts, padding, and non-atomic practices. For hardware registers, masks and shifts are the robust and portable way to do it.
+Avoid using pure C bit-fields for registers. They can break with implementation specific layouts, padding, and non-atomic practices. For hardware registers, masks and shifts are the robust and portable way to do it.
 
 That is all.
 
