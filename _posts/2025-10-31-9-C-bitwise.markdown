@@ -5,7 +5,7 @@ date:   2025-11-02 10:00:00 +0000
 categories: STM32
 ---
 
-For embedded C, bitwise operators are the key to understanding how to interact with communications protocols, data packets, and registers. I'll start with a review of binary, then cover the bit wise operators, and move on to some applications.
+For embedded C, bitwise operators are the key to understanding how to interact with communications protocols, data packets, and registers. I'll start with a review of binary, then cover the bit wise operators, and move on to some applications for the STM32F1 bluepill.
 
 # A whistle stop tour through binary
 The binary system is base two, and so each value can only be stored as two digits; a 1, or a 0. Much like the decimal system (base 10) where there are 10 digits 0-9, to give meaning above the digit 9, a representative meaning is given to the order of the digits. Binary is used because of how information is stored in hardware, it is much easier to store a 1 or 0 than venturing into [trits](https://en.wikipedia.org/wiki/Ternary_numeral_system), [dits](https://en.wikipedia.org/wiki/Hartley_(unit)), or even [qbits](https://en.wikipedia.org/wiki/Qubit) and beyond. So, to count to higher numbers than one, multiple binary digits are combined and given a representative value based on the digits order in a list. To convert to decimal, you take all the positions (n) given a 1 and sum their corresponding 2<sup>n</sup> values. For example, an unsigned 8 bit binary storage list will typically have the attributed values of: 2<sup>7</sup>, 2<sup>6</sup>, 2<sup>5</sup>, 2<sup>4</sup>, 2<sup>3</sup>, 2<sup>2</sup>, 2<sup>1</sup>, & 2<sup>0</sup> to each corresponding bit. To represent the unsigned integer decimal 3 in 8 bits you would set the 2<sup>0</sup> + 2<sup>1</sup> positions to a 1 and the rest by 0s resulting in a binary representation of ```00000011```:
@@ -13,17 +13,28 @@ The binary system is base two, and so each value can only be stored as two digit
 ```
 Binary position decimal meaning:    2**7       2**6       2**5       2**4       2**3       2**2       2**1       2**0
 Binary representation of decimal 3: 0          0          0          0          0          0          1          1
-Converting binary to decimal:       0*(2**7) + 0*(2**6) + 0*(2**5) + 0*(2**4) + 1*(2**3) + 0*(2**2) + 1*(2**1) + 1*(2**1) = 3
+Converting binary to decimal:       0*(2**7) + 0*(2**6) + 0*(2**5) + 0*(2**4) + 0*(2**3) + 0*(2**2) + 1*(2**1) + 1*(2**0) = 3
 ```
 
-Are you a big-endian or a little-endian? Wait waittt.... I don't want to know, reality doesn't exist until you measure it right, Schrodingers cat and all. [Endianness](https://en.wikipedia.org/wiki/Endianness) is arbitrary. For this post big-endianness is assumed; The most significant bit is first, so for a 8 bit unsigned integer that would be the 2<sup>7</sup> bit, and the 2<sup>0</sup> bit is last. For example, the decimal number 3 in big-endian 8 bit unsigned binary is ```00000011```, which can also be specified using the binary specifier ```0b``` as ```0b11``` in C23 where the big-endian convention is assumed. Another example would be decimal 119 is equivalent to ```01110111``` in binary. Under this regime with 8 bits, the range of unsigned integers you can store will be from 0 to 255.
+**Are you a big-endian or a little-endian?** <br>
+Wait waittt.... I don't want to know, reality doesn't exist until you measure it right, Schrodingers cat and all. [Endianness](https://en.wikipedia.org/wiki/Endianness) is arbitrary. For this post big-endianness is assumed; The most significant bit is first, so for a 8 bit unsigned integer that would be the 2<sup>7</sup> bit, and the 2<sup>0</sup> bit is last. For example, the decimal number 3 in big-endian 8 bit unsigned binary is ```00000011```, which can also be specified using the binary specifier ```0b``` as ```0b11``` in C23 where the big-endian convention is assumed. Another example would be decimal 119 is equivalent to ```01110111``` in binary, have a go! Under this regime with 8 bits, the range of unsigned integers you can store will be from 0 to 255.
 
-We've covered the "unsigned" integer, so what if you want to store both negative and positive numbers? You can use the [Two's compliment](https://en.wikipedia.org/wiki/Two%27s_complement) convention; where the most significant bit (the first one in big-endian convention) is used to denote if the integer is a positive or negative. This changes the amount of numbers than can be represented compared to an equivalent sized unsigned integer. See if you can work out the range of values if the most significant bit is used for the polarity and not for 2^7:  Did you get -127 to 127? Wrong, you didn't read the wiki did you! That would be the [One's compliment](https://en.wikipedia.org/wiki/Ones%27_complement) convention. In Two's Compliment 0 is only represented once, this is done by representing negative numbers by taking the bit compliments of their magnitude (flipping all the bits) and adding 1, for example an 8 bit signed int decimal 6 is represented as ```00000110```, the additional bits are padded with zeros for positive numbers and 1s for negative numbers, so -6 is represented as 11111010. This way an extra value representation can be squeezed into the negative side bringing the range of represented values to: -128 to 127 for a signed 8 bit integer. Squeezing every int out of that binary space.
+**Signed integers**
+We've covered the "unsigned" integer, so what if you want to store both negative and positive numbers? You can use the [Two's compliment](https://en.wikipedia.org/wiki/Two%27s_complement) convention; where the most significant bit (the first one in big-endian convention) is used to denote if the integer is a positive or negative. This changes the amount of numbers than can be represented compared to an equivalent sized unsigned integer. See if you can work out the range of values if the most significant bit is used for the polarity and not for 2<sup>7</sup>...  Did you get -127 to 127?... Wrong, you didn't read the wiki did you! That would be the [One's compliment](https://en.wikipedia.org/wiki/Ones%27_complement) convention.
+
+In Two's Compliment zero is represented only once. Negative numbers are formed by taking the bit compliment (flipping all the bits) of the positive number's magnitude and then adding 1. For example, an 8 bit signed int decimal 6:
+```
++6 = 00000110
+-6 = Invert bits (11111001) and add 1 (11111010).
+```
+Positive numbers are padded with leading zeros, and negative numbers are padded with leading ones, known as sign extension.
+
+This encoding allows an extra value representation to be squeezed into the negative side, bringing the range of represented values to: -128 to 127 for a signed 8 bit integer. Squeezing every int out of that binary space.
 
 That was a bit less whistle stop and a bit more lunch break, sorry!
 
 # Bit wise operators
-If you have come across logical operators before this will be fairly straight forward, instead of the integer, the operand is each bit, and the bitwise operator will run sequentially on every bit that makes up the memory address / register / integer / ASCI character, whatever it is, it doesn't care, it all boils down to binary. So here are the main bit wise operators with their corresponding truth tables and unsigned 8 bit decimal examples:
+If you have come across logical operators before this will be fairly straight forward. Instead of the integer, the operand is each bit, and the bitwise operator will run sequentially on every bit that makes up the memory address / register / integer / ASCI character, whatever it is, it doesn't care, it all boils down to binary. So here are the main bit wise operators with their corresponding truth tables and unsigned 8 bit decimal examples:
 
 
 
@@ -199,14 +210,16 @@ Result:
 
 # How might it be useful for embedded... flags
 
-Now that we can print bits, let’s see how to use them. Flags are where bit-level logic becomes truly practical. You can take a 8 bit register and store 8 flags inside it to denote a configuration in a memory/bandwidth efficient manner for example. You can use the bitwise operators discussed to set and read flags stored in this much like the previous example.
+Now that we can print bits, let’s see how to use them. Flags are where bit-level logic becomes truly practical. You can take a 8 bit register and store 8 flags inside it to denote a configuration in a memory/bandwidth efficient manner for example. Here is an example of an 8 bit flag register with 8 flags in it:
 
-Lets say you have a 8 bit register holding the unsigned decimal value 2: 00000010. Now you want to find out if the 2<sup>1</sup> bit is a 1 or a 0. This one is simple, as all other bits are 0, so if you take another register that holds a single bit at the 2<sup>1</sup> bit and bit wise AND (&) it with the original register if both bits are 1, the result will also be 1, and a decimal value of 2 in this case:
+![flag register](/docs/assets/img/blog-09-flags.png)
+
+You can use the bitwise operators discussed to set and read flags stored in this much like the previous example. Lets say you have a 8 bit register holding the unsigned decimal value 2: 00000010. Now you want to find out if the 2<sup>1</sup> bit is a 1 or a 0. This one is simple, as all other bits are 0, so if you take another register that holds a single bit at the 2<sup>1</sup> bit and bit wise AND (&) it with the original register if both bits are 1, the result will also be 1, and a decimal value of 2 in this case:
 
 ```
-flag_register                  = 00000010 = 2;
-check_for_flag                 = 00000010 = 2;
-flag_register & check_for_flag = 00000010 = 2;
+flag_register                  = 00000010 = 2 in decimal
+check_for_flag                 = 00000010 = 2 in decimal
+flag_register & check_for_flag = 00000010 = 2 in decimal
 ```
 
 Lets setup a basic C program to implement this, we will include the printBinary function we developed earlier for help visualising the binary, set a flags register to the decimal value 54, then check the first two least significant bits as the first and second flag and print if they are enabled or not:
@@ -247,7 +260,7 @@ int main (void) {
 
 ```
 
-Now this works because decimal 2 = 00000010, and decimal 1 is 00000001. So when we bitwise & these with the flag register they will only check for those positions. If you try this with the value 3 however, you will notice that it will now bitwise & successfully both 1 and 2, resulting in a decimal value of three. So this approach doesn't quite scale for checking all of the bits. Lets write a checker which can scale a bit better (...sorry) and put it in its own function above main. We will do this by utilising the same method as the printBinary function; by right shifting the register to check the bit position against the decimal value 1 (0000001) with a bitwise &:
+Now this works because decimal 2 is 00000010 in binary, and decimal 1 is 00000001 in binary. So when we bitwise & these with the flag register they will only check for those positions. If you try this with the value 3 however, you will notice that it will now bitwise & successfully both 1 and 2, resulting in a decimal value of three. So this approach doesn't quite scale for checking all of the bits independently. Lets write a checker which can scale a bit better (...sorry) and put it in its own function above main. We will do this by utilising the same method as the printBinary function; by right shifting the register to check the bit position against the decimal value 1 (0000001) with a bitwise &:
 
 ```c
 void checkFlag(int bit, uint8_t flagRegister) {
@@ -275,6 +288,7 @@ int main (void) {
     return 0;
 }
 ```
+I used sizeof() here to introduce it, it will return the size of the memory in bytes, so 1 in this case, which I multiplied by 8 to get the number of bits.
 
 The result should look like this:
 
@@ -289,7 +303,6 @@ Flag: 5 - enabled
 Flag: 6 - disabled
 Flag: 7 - disabled
 ```
-I used sizeof here to make the function potentially more scaleable. Keep in mind that sizeof reports the number of bytes, not bits, considering there are 8 bits in a byte, I have multiplied the value by 8.
 
 Here is the full code:
 
@@ -328,7 +341,7 @@ int main (void) {
 
 # Enabling Flags
 
-We will do this by using a bit wise OR operator, and rather that using the decimal values we will use direct binary represention using the 0b prefix (Only supported in C23 and greater), so the decimal value 2 = 0b10, 3 = 0b11, 4 = 0b100, etc:
+We will do this by using a bit wise OR operator, and rather than using the decimal values we will use direct binary represention using the 0b prefix (Only supported in C23 and greater), so the decimal value 2 = 0b10, 3 = 0b11, 4 = 0b100, etc. If you are using <C23 then convert this to hex representation.
 
 To set flag 0 from 0 to 1, without impacting the other flag bits, we simply bitwise OR it with 0b1, add this to the end of the main loop:
 
@@ -360,7 +373,7 @@ Flag: 7 - disabled
 With this type of set statement we can compound the bitwise OR to set multiple flags in one line if we so wish, setting ``` flags = flags | 0b1 | 0b1000 | 0b1000000;``` for example should now result in a new flag register of ```01111111```, give it a try!
 
 # Resetting bits (Disabling flags)
-What if you want to disable a flag?  Lets take the 0b1000 flag at position 2^3 bit.
+What if you want to disable a flag?  Lets take the ```0b1000``` flag at position 2<sup>3</sup> bit.
 ```
 flags = 0b01111111;
 flag3 = 0b00001000;
@@ -378,7 +391,7 @@ Rather than bit wise OR these two together to enable the bit, we can NOT flag3 t
         checkFlag(i, flags);
     }
 ```
-This can also nbe compounded to disable multiple flags at the same time.
+This can also be compounded to disable multiple flags at the same time.
 
 # Macros
 
@@ -449,7 +462,7 @@ int main (void) {
 
 # Now it's starting to look like something for embedded...
 
-In STM32, peripheral registers are memory-mapped. You read/write bits to configure hardware or check status flags. CMSIS gives you typed structs (e.g., GPIOA, USART2, RCC) so you can do clean and safe bit operations. Note that in the previous example we have used the pure C binary specifier 0bxx... however for embedded it is typically better to use hex as 0b can be compiler and implementaiton specific (brought in in C23).
+In STM32, peripheral registers are memory-mapped. You read/write bits to configure hardware or check status flags. CMSIS gives you typed structs (e.g., GPIOA, USART2, RCC) so you can do clean and safe bit operations. Note that in the previous example we have used the pure C binary specifier 0bxx... however for embedded it is typically better to use hex as 0b can be compiler and implementaiton specific (brought in in C23). For hex representation 0x is used at the beginning and u at the end to denote unsigned, so a unsigned int 3 in hex is ```0x3u```.
 
 For example, you can directly enable the GPIOA clock via modifying the AHB1ENR register. Everything previous was pure C, below, these will have to be in a STM32 embedded project like the previous blog posts.
 ```c
@@ -474,38 +487,37 @@ GPIOA->MODER |=  (0x1u << (5 * 2));       // set to 01 (output)
 ```
 Mask then set is the safest pattern for multi-bit fields.
 
-# Bit Set/Reset Register
+# Bit Set/Reset Register (STM32F1x)
 
 You can set and clear output bits automatically with the Bit Set/Reset Register (BSRR). Writing to GPIOx->BSRR avoids read-modify-write issue like race conditions and is atomic on Cortex-M. The GPIOx_BSRR register is a 32-bit write only register which is divided into two halves; 
 
 * Bits 0-15 are set bits, writing a 1 sets the corresponding output bit to 1 or HIGH.
 * Bits 16-31 are reset bits, writing a 1 sets the corresponding output bit to 0 or LOW.
 
-See [RM0008](https://www.st.com/en/microcontrollers-microprocessors/stm32f103/documentation.html) for more details on the BSRR. Here is an example of seting and resetting the PA5 pin on GPIOA:
+See [RM0008](https://www.st.com/en/microcontrollers-microprocessors/stm32f103/documentation.html) for more details on the BSRR. Here is an example of setting and resetting the PA5 pin on GPIOA:
 
 ```c
 // Set PA5 high
-GPIOA->BSRR = (1u << 5);
+GPIOA->BSRR = (0x1u << 5);
 
 // Set PA5 low (write to reset upper-half)
-GPIOA->BSRR = (1u << (5 + 16));
+GPIOA->BSRR = (0x1u << (5 + 16));
 ```
 
-Avoid using GPIOA->ODR |= in ISRs or multi-context code. BSRR is better for this. If using libopencm3, the BSRR is utilised by the gpio_set() and gpio_clear() functions making them atomic and safe to use. For example if you executed ```c gpio_set(GPIOA, GPIO5)``` it would employ ```c GPIO_BSRR = (1 << 5)``` to set bit 5 in the BSRR register. However with your knowledge of bitwise operators now you could do something like set a bunch of pins at the same time with the bit wise OR:
+Avoid using ```GPIOA->ODR |= ...``` in ISRs or multi-context code. BSRR is better for this. If using libopencm3, the BSRR is utilised by the ```gpio_set()``` and ```gpio_clear()``` functions making them atomic and safe to use. For example if you executed ```c gpio_set(GPIOA, GPIO5)``` it would employ ```c GPIO_BSRR = (0x1u << 5)``` to set bit 5 in the BSRR register. However with your knowledge of bitwise operators now you could do something like set a bunch of pins at the same time with the bit wise OR:
 
 ```c
 gpio_set(GPIOA, GPIO5 | GPIO6 | GPIO7); // sets PA5, PA6, and PA7
 ```
 
-Those GPIOx constants are just bit masks like the FLAG_x masks from earlier,
+Those GPIOx constants are just bit masks like the FLAG_x masks from earlier.
 
 More often though you might need to manipulate some of the less abstracted registers such as the Reset and Clock Control (RCC), External interrupts (EXTI), Alternate function remapping (AFIO), and the Interrup enable bits (NVIC).
 
 You could also do something like read a pin (IDR) and a status flag (USART ISR)
 ```c
-
 // Read PA6 input state
-uint32_t pa6 = (GPIOA->IDR >> 6) & 1u;
+uint32_t pa6 = (GPIOA->IDR >> 6) & 0x1u;
 
 // USART2: check TXE (transmit data register empty) flag before sending
 if (USART2->ISR & USART_ISR_TXE_TXFNF) {
