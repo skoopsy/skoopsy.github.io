@@ -382,7 +382,7 @@ This can also nbe compounded to disable multiple flags at the same time.
 
 # Macros
 
-Finally trying to remember the binary for each flag gets a bit tough and is not very readable so we can modify the code to use macros for each flag which makes the whole procedure much easier to read now we understand what is happening under the hood. Here is the final code, implemented in C23: (If you are using <C23 then you will have to convert the binary representation to hex)
+Trying to remember the binary for each flag gets a bit tough and is not very readable, so we can modify the code to use macros for each flag which makes the whole procedure much easier to read now we understand what is happening under the hood. Here is the final code utilising macros, implemented in C23: (If you are using <C23 then you will have to convert the binary representation to hex)
 
 ```c
 #include <stdio.h>
@@ -449,9 +449,9 @@ int main (void) {
 
 # Now it's starting to look like something for embedded...
 
-In STM32, peripheral registers are memory-mapped. You read/write bits to configure hardware or check status flags. CMSIS gives you typed structs (e.g., GPIOA, USART2, RCC) so you can do clean and safe bit operations. Note that in the previous example we have used the pure C binary specifier 0bxx... however for embedded it is typically better to use hex as 0b can be compiler and implementaiton specific.
+In STM32, peripheral registers are memory-mapped. You read/write bits to configure hardware or check status flags. CMSIS gives you typed structs (e.g., GPIOA, USART2, RCC) so you can do clean and safe bit operations. Note that in the previous example we have used the pure C binary specifier 0bxx... however for embedded it is typically better to use hex as 0b can be compiler and implementaiton specific (brought in in C23).
 
-For example, you can directly enable the GPIOA clock via modifying the AHB1ENR register. Everything previous was pure C, below, these will have to be in a STM32 embedded project like the previousblog posts.
+For example, you can directly enable the GPIOA clock via modifying the AHB1ENR register. Everything previous was pure C, below, these will have to be in a STM32 embedded project like the previous blog posts.
 ```c
 #include "stm32f1xx.h"
 
@@ -464,7 +464,7 @@ if (RCC->AHB1ENR & RCC_AHB1ENR_GPIOAEN) {
 }
 ```
 
-Or you might want to configure a pin mode by masking a multi-bit field. Many fields are 2 bit slices. For example, each GPIO pin has a 2-bit mode in ```GPIOx->MODER```:
+Or you might want to configure a pin mode by masking a multi-bit field. Many fields are 2 bit slices. For example, each GPIO pin has a 2-bit mode  register: ```GPIOx->MODER```:
 
 ```c
 // Configure PA5 as general-purpose output
@@ -476,13 +476,13 @@ Mask then set is the safest pattern for multi-bit fields.
 
 # Bit Set/Reset Register
 
-You can set and clear output bits automatically with the Bit Set/Reset Register (BSRR). Writing to GPIOx->BSRR avoids read-modify-write issue like rae conditions and is atomic on Cortex-M. The GPIOx_BSRR register is a 32-bit write only register which is divided into two halves; 
+You can set and clear output bits automatically with the Bit Set/Reset Register (BSRR). Writing to GPIOx->BSRR avoids read-modify-write issue like race conditions and is atomic on Cortex-M. The GPIOx_BSRR register is a 32-bit write only register which is divided into two halves; 
 
-Bits 0-15 are set bits, writing a 1 sets the corresponding output bit to 1 or HIGH.
+* Bits 0-15 are set bits, writing a 1 sets the corresponding output bit to 1 or HIGH.
+* Bits 16-31 are reset bits, writing a 1 sets the corresponding output bit to 0 or LOW.
 
-Bits 16-31 are reset bits, writing a 1 sets the corresponding output bit to 0 or LOW.
+See [RM0008](https://www.st.com/en/microcontrollers-microprocessors/stm32f103/documentation.html) for more details on the BSRR. Here is an example of seting and resetting the PA5 pin on GPIOA:
 
-The  See RM0008 for more details on the BSRR. Here is an example of seting and resetting the PA5 pin on GPIOA:
 ```c
 // Set PA5 high
 GPIOA->BSRR = (1u << 5);
