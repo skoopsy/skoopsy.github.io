@@ -532,6 +532,7 @@ Those GPIOx constants are just bit masks like the FLAG_x masks from earlier.
 
 More often though you might need to manipulate some of the less abstracted registers such as the Reset and Clock Control (RCC), External interrupts (EXTI), Alternate function remapping (AFIO), and the Interrup enable bits (NVIC).
 
+# USART Communication Example on the STM32F1xx
 You could also do something like read a pin with the Input Data Register (IDR) or a status flag with the Status Regester (SR), Data Register (DR) and Transmit Data Register (TDR). We will bring this all together with a complete code example by trying to transmit a byte on USART2.
 
 From the RM0008 manual the relevant registers are:
