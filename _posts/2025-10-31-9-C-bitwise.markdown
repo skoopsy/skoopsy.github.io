@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "STM32 #8: Binary, Bitwise Operators, and set/get flags"
+title:  "STM32 #8: Binary, Bitwise Operators, Flags, and Register Control in Embedded C"
 date:   2025-11-02 10:00:00 +0000
 categories: STM32
 ---
@@ -35,8 +35,6 @@ That was a bit less whistle stop and a bit more lunch break, sorry!
 
 # Bit wise operators
 If you have come across logical operators before this will be fairly straight forward. Instead of the integer, the operand is each bit, and the bitwise operator will run sequentially on every bit that makes up the memory address / register / integer / ASCI character, whatever it is, it doesn't care, it all boils down to binary. So here are the main bit wise operators with their corresponding truth tables and unsigned 8 bit decimal examples:
-
-
 
 **Bitwise AND: &** <br>
 If both bits being compared are 1 then a 1 is produced, if not then produce a zero.
@@ -225,7 +223,6 @@ flag_register & check_for_flag = 00000010 = 2 in decimal
 Lets setup a basic C program to implement this, we will include the printBinary function we developed earlier for help visualising the binary, set a flags register to the decimal value 54, then check the first two least significant bits as the first and second flag and print if they are enabled or not:
 
 ```c
-
 #include <stdio.h>
 #include <stdint.h>
 
@@ -257,7 +254,6 @@ int main (void) {
 
     return 0;
 }
-
 ```
 
 Now this works because decimal 2 is 00000010 in binary, and decimal 1 is 00000001 in binary. So when we bitwise & these with the flag register they will only check for those positions. If you try this with the value 3 however, you will notice that it will now bitwise & successfully both 1 and 2, resulting in a decimal value of three. So this approach doesn't quite scale for checking all of the bits independently. Lets write a checker which can scale a bit better (...sorry) and put it in its own function above main. We will do this by utilising the same method as the printBinary function; by right shifting the register so that the bit we want to check is shifted to the lest significant bit position and compared against a decimal 1 (0000001) with a bitwise &, if the bit being check is a 1 then the result is 1, otherwise it is 0:
