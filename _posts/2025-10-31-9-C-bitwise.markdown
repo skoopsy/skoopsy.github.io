@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "STM32 #8: Binary, Bitwise Operators, and set/get flags"
+title:  "STM32 #8: Binary, Bitwise Operators, Flags, and Register Control in Embedded C"
 date:   2025-11-02 10:00:00 +0000
 categories: STM32
 ---
@@ -35,8 +35,6 @@ That was a bit less whistle stop and a bit more lunch break, sorry!
 
 # Bit wise operators
 If you have come across logical operators before this will be fairly straight forward. Instead of the integer, the operand is each bit, and the bitwise operator will run sequentially on every bit that makes up the memory address / register / integer / ASCI character, whatever it is, it doesn't care, it all boils down to binary. So here are the main bit wise operators with their corresponding truth tables and unsigned 8 bit decimal examples:
-
-
 
 **Bitwise AND: &** <br>
 If both bits being compared are 1 then a 1 is produced, if not then produce a zero.
@@ -117,7 +115,6 @@ A << 2 = 00001100 = 12 decimal
 ```
 
 Each position the value is shifted to the left, the value doubles, or the value is multiplied by 2**n, as long as it does not exceed (overflow) the register max bit range. This requires less compute than a typical multiplication routine. Where the end bit, big or small, moves into the register a 0 is initialised in the now "empty" spot. There are exceptions for signed integers where the sign bit is preserved.
-
 
 
 **Bitwise shift right >> n** <br>
@@ -208,6 +205,7 @@ Result:
 >>> 00110110
 ```
 
+
 # How might it be useful for embedded... flags
 
 Now that we can print bits, let’s see how to use them. Flags are where bit-level logic becomes truly practical. You can take a 8 bit register and store 8 flags inside it to denote a configuration in a memory/bandwidth efficient manner for example. Here is an example of an 8 bit flag register with 8 flags in it:
@@ -225,7 +223,6 @@ flag_register & check_for_flag = 00000010 = 2 in decimal
 Lets setup a basic C program to implement this, we will include the printBinary function we developed earlier for help visualising the binary, set a flags register to the decimal value 54, then check the first two least significant bits as the first and second flag and print if they are enabled or not:
 
 ```c
-
 #include <stdio.h>
 #include <stdint.h>
 
@@ -257,7 +254,6 @@ int main (void) {
 
     return 0;
 }
-
 ```
 
 Now this works because decimal 2 is 00000010 in binary, and decimal 1 is 00000001 in binary. So when we bitwise & these with the flag register they will only check for those positions. If you try this with the value 3 however, you will notice that it will now bitwise & successfully both 1 and 2, resulting in a decimal value of three. So this approach doesn't quite scale for checking all of the bits independently. Lets write a checker which can scale a bit better (...sorry) and put it in its own function above main. We will do this by utilising the same method as the printBinary function; by right shifting the register so that the bit we want to check is shifted to the lest significant bit position and compared against a decimal 1 (0000001) with a bitwise &, if the bit being check is a 1 then the result is 1, otherwise it is 0:
@@ -339,9 +335,10 @@ int main (void) {
 }
 ```
 
+
 # Enabling Flags
 
-We will do this by using a bit wise OR operator, and rather than using the decimal values we will use direct binary represention using the 0b prefix (Only supported in C23 and greater), so the decimal value 2 = 0b10, 3 = 0b11, 4 = 0b100, etc. If you are using <C23 then convert this to hex representation.
+Using the bit wise OR operator you can statrt enabling things like flags in a register, and for this section rather than using the decimal values we will use direct binary represention using the 0b prefix (Only supported in C23 and greater), so the decimal value 2 = 0b10, 3 = 0b11, 4 = 0b100, etc. If you are using <C23 then you have to momentarily jump ahead and convert this to hex representation.
 
 To set flag 0 from 0 to 1, without impacting the other flag bits, we simply bitwise OR it with 0b1, add this to the end of the main loop:
 
@@ -460,30 +457,49 @@ int main (void) {
 }
 ```
 
-# Now it's starting to look like something for embedded...
+# Now it's starting to look like embedded, prepare to be vexed, hexed, and nibbled!
+Okay so we have blown a cannon ball through manny of the abstract layers and you should find yourself staring at bare metal. So if everything inside a microcontroller is binary, why don't we just write binary literals directly using 0b? Enter the hexadecimal.
+
+Hexadecimal is a base 16 representation as shown in the image below:
+![binary, hex, decimal](docs/assets/img/blog-09-bin-dec-hex-conversion.png)
+
+Base 16 means values van be represented in a compact manner, for example if we wanted to set the decmial value: ```40960``` in binary that would be: ```0b1010000000000000```, but in hexadecimal it is ```0xA000```. There are a lot fo zeros in that binary, it would be very easy to miss one out, causing all sorts of chaos leaving you vexed. As you might have guessed the 0x prepend tells C that the value is encoded in hexadecimal.
+
+Each hex digit can be represented by 4 binary bits as seen in the image above, this is known as a nibble! (Half a byte). This makes it easy to convert between binary and hex, you just split the binary into nibbles and use the table above: ```0xA000 = 1010 0000 0000 0000```. A nibble aligns quite nicely with much in embedded such as 8, 16, 32 bit and so on registers. So a 32 bit register can be represented by 8 hexadecimal digits.
+
+Hexadecimal is not so good for visualising bit masks so you will often see conversions but it is always used to set registers due to it being the widely accepted convetion and much more long standing representation in the C language (since 1989) than the 0b specificer.
+
+Lastly, on the point of expressing bit masks, in production code you would often avoid this all together by defining bits with macros. For example defining a decimal 1 unsigned as we previously have, and the left shifting it to the position you want to create the bit mask and assigning it to a #define like so:
+
+```c
+#define USART_CR1_TE (1U << 3) // shifts decimal 1 left by 3 places = 0b1000 = 0x8
+```
+
+# Now it's actually starting to look like embedded...
 
 In STM32, peripheral registers are memory-mapped. You read/write bits to configure hardware or check status flags. CMSIS gives you typed structs (e.g., GPIOA, USART2, RCC) so you can do clean and safe bit operations. Note that in the previous example we have used the pure C binary specifier 0bxx... however for embedded it is typically better to use hex as 0b can be compiler and implementaiton specific (brought in in C23). For hex representation 0x is used at the beginning and u at the end to denote unsigned, so a unsigned int 3 in hex is ```0x3u```.
 
-For example, you can directly enable the GPIOA clock via modifying the AHB1ENR register. Everything previous was pure C, below, these will have to be in a STM32 embedded project like the previous blog posts.
+For example, you can directly enable the GPIOA clock via modifying the APB2ENR register. Everything previous was pure C, below, these will have to be in a STM32 embedded project like the previous blog posts.
 ```c
 #include "stm32f1xx.h"
 
 // Enable GPIOA clock by setting the GPIOAEN bit
-RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+RCC->AHB1ENR |= RCC_APB2ENR_IOPAEN;
 
 // Check if it is set by reading the flag
-if (RCC->AHB1ENR & RCC_AHB1ENR_GPIOAEN) {
+if (RCC->APB2ENR & RCC_APB2ENR_IOPAEN) {
     // Do some stuff because the flag is enabled
 }
 ```
 
-Or you might want to configure a pin mode by masking a multi-bit field. Many fields are 2 bit slices. For example, each GPIO pin has a 2-bit mode  register: ```GPIOx->MODER```:
-
+You might want to configure a pin mode by masking a multi-bit field. Many fields are 2 bit slices such as the STM32F4 chips where each GPIO pin has a 2-bit mode register: ```GPIOx->MODER``` representing ```00=input, 01=output, 10=AF, 11=analog```. On the STM32F1 series there are 4 bits per pin: CNF[1:0] + MODE[1:0]. For example to configure PA5 as a general purpose push pull output @ 2MHz you must set MODE to 10, and CNF to 00 which can be done with the binary mask 0b0010 or in hex 0x2:
 ```c
 // Configure PA5 as general-purpose output
-// MODER has 2 bits per pin: 00=input, 01=output, 10=AF, 11=analog.
-GPIOA->MODER &= ~(0x3u << (5 * 2));       // clear the 2-bit field
-GPIOA->MODER |=  (0x1u << (5 * 2));       // set to 01 (output)
+// Clear the 4-bit field for pin 5 (in CRL: pins 0–7)
+GPIOA->CRL &= ~(0xFu << (5 * 4));
+
+// Set MODE=10 (2 MHz), CNF=00 (GP push-pull) → 0x2 (0x3=50Mhz, 0x1=10MHz)
+GPIOA->CRL |=  (0x2u << (5 * 4));
 ```
 Mask then set is the safest pattern for multi-bit fields.
 
@@ -514,18 +530,207 @@ Those GPIOx constants are just bit masks like the FLAG_x masks from earlier.
 
 More often though you might need to manipulate some of the less abstracted registers such as the Reset and Clock Control (RCC), External interrupts (EXTI), Alternate function remapping (AFIO), and the Interrup enable bits (NVIC).
 
-You could also do something like read a pin (IDR) and a status flag (USART ISR)
-```c
-// Read PA6 input state
-uint32_t pa6 = (GPIOA->IDR >> 6) & 0x1u;
+You could also do something like read a pin with the Input Data Register (IDR) or a status flag with the Status Regester (SR), Data Register (DR) and Transmit Data Register (TDR). We will bring this all together with a complete code example by trying to transmit a byte on USART2.
 
-// USART2: check TXE (transmit data register empty) flag before sending
-if (USART2->ISR & USART_ISR_TXE_TXFNF) {
-    USART2->TDR = 'A'; // write one byte
+From the RM0008 manual the relevant registers are:
+* USARTx->SR - Status Register
+  * USART_SR_TXE - Transmit data register empty. (bit 7)
+    * 1 means DR can accept a new byte. 
+    * Cleared by writing to DR.
+  * USART_SR_TC - Transmission complete / stop bit sent (bit 6)
+
+* USARTx->DR - Data register
+  * Write a byte here to start data transmission when TXE=1
+  * Read from here when RXNE=1 to get the recieved byte
+
+* USARTx->BRR - Baud Rate Register
+  * Holds the USART divider for the APB clock to set the baud rate.
+
+* USARTx->CR1 - Control Register 1
+  * UE - USART Enable (bit 13)
+  * TE - Transmitter Enable (bit 3)
+  * RE - Reciever Enable (bit 2)
+
+Also check out the CR2 and CR3 registers for stop bits and flow control.
+
+Let's start by setting up a blank tempalte for the STM32f1 chip (Bluepill C8T6):
+```c
+#include "stm32f1xx.h"
+
+int main (void) {
+    for (;;) {
+        // Do stuff
+    }
 }
 ```
 
-Avoid using pure C bit-fields for registers. They can break with implementation specific layouts, padding, and non-atomic practices. For hardware registers, masks and shifts are the robust and portable way to do it.
+Lets create a function to initialise USART. We will start with enabling the clocks:
+
+```c
+static void usart2_init_115200(void) {
+    // Clocks: GPIOA on APB2, USART2 on APB1
+
+    // Enable the APB2 peripheral clock and direct it to GPIOA (IOPAEN), Turn on AFIO
+    RCC->APB2ENR |= RCC_APB2ENR_IOPAEN | RCC_APB2ENR_AFIOEN;
+
+    // Enable the APB1 peripheral clock and direct it to USART2
+    RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+}
+```
+
+If you want to change the USART2 pin mapping from PA2 and PA3 to PD5 and PD6, set the AFIO register to remap: ```AFIO->MAPR |= AFIO_MAPR_USART2_REMAP```.
+
+Next inside the usart2_init_115200() function we will configure the PA2 and PA3 pins for USART. Pins 0-7 are configured in the CRL register and pins 8-15 in CRH. Each pin has 4 bits 2 for configureation and 2 for mode: CNF[1:0], MODE[1:0].
+
+For output mode:
+* MODE: 01=10 MHz, 10=2 MHz, 11=50 MHz
+* CNF: 00=GP push-pull, 01=GP open-drain, 10=AF push-pull, 11=AF open-drain
+
+For input mode:
+* MODE: 00=input
+* CNF: 00=analog, 01=floating, 10=pull-up/pulldown, 11=reserved
+
+Lets set the PA2 TX pin:
+```c
+    // TX (PA2): Alternate function push pull, 50MHz
+    // CNF=10, MODE=11, bit mask = 0b1011 = 0xB
+    GPIOA->CRL &= ~(0xFu << (2 *4)); // reset the 4 bit field
+    GPIOA->CRL |= (0xBu << (2 * 4)); // write 1011
+```
+
+Now the PA3 RX pin:
+```c
+    // RX (PA3): Input floating
+    // CNF=01, MODE=00, bit mask = 0b0100 = 0x4
+    GPIOA->CRL &= ~(0xFu << (3 * 4));
+    GPIOA->CRL |= (0x4u << (3 * 4));
+```
+
+We must configure the Baud rate. Make sure your PCLK1 is running at 36 MHz: SYSCLK=72 MHZ, APB1 prescaler=2 which results in 36 MHz. If APB1 is at a different rate the you'll have to modify the calculations I use below. Ripped from RM0008:
+> "The baud rate for the reciever and transmitter (Rx and Tx) are both set to the same value as programmed in the Mantissa and Fraction values of USARTDIV." 
+
+The F1 chip also oversamples by 16, the baud-rate generator counts 16 peripheral clocks for each bit period. And so you will see the denominator has a 16x multiplier for the oversampling:
+```
+Tx/Rx baud = fPCLK / (16*USARTDIV)
+
+fPCLK: Input clock to the peripheral (PCLK1 for USART 2,3,4,5, PCLK2 for USART1)
+USARTDIV: Unsigned fixed point number coded on the USART_BRR register.
+```
+
+However it isn't quite that simple. If we set the baud rate to 115200, with the PCLK1 at 36 MHz. BRR = fPCLK / 16*baud = 36,000,000 / (16*115,200) = 19.53125. However, recalling the statement from RM0008 above the BRR is based on the mantissa (part of a floating point number representing the significant digits) and fraction values (as ints). So the number must be rounded to fit nicely into the registers. The following table from RM0008 suggests 19.5:
+
+![Table 192. Error calculation for pregrammied baud rates](docs/assets/img/blog-09-baud.png)
+
+For the USART_BRR register, the USARTDIV is split into:
+* USART_BRR[15:4] is the mantissa (12 bits)
+* USART_BRR[3:0] is the fraction (4 bits) - with the fraction being divided by 16 due to the over sampling. Each increment of the low nibble adds 1/16 to the USARTDIV.
+
+Conceptually this makes USARTDIV = mantissa + fraction/16
+
+So to fit 19.53125 nicely into the BRR register we can chose 19 + 8/16 or 19 + 9/16. The table has shown 19.5 with the error values so lets go with that and round down, rounding up to 9/16 would produce the same error.
+
+So to get the values into the BRR register we have:
+```
+BRR = (mantissa << 4) | (fraction & 0xF)
+BRR = (0x13 << 4) | 0x8 = 0x1388
+```
+
+So lets add that to the init function:
+```c
+    // Set baud 115200, 
+    USART2->BRR = 0x1388;
+```
+
+On a side note if PCLK1 = 72 MHz you'll notice in the table that at 115200 baus is exactly 39 + 1/16 producing 0% error.
+
+Now we can ebale the USART, and the TX and RX!
+```c
+    USART2->CR1 |= USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
+```
+If word length, partity and stop btis need to be changed ser CR1 and CR2 accordingly before setting UE.
+Now we are done with our initiliase funciton.
+
+Lets produce a small function to write bytes to usart 2:
+```c
+static void usart2_write_byte(uint8_t b) {
+    // Wait for TXE=1
+    while ((USART2->SR & USART_SR_TXE) == 0) {
+        //spin
+    }
+    USART2->DR = b; // Writing DR clears TXE and starts shifting the byte b
+}
+```
+
+Go back into the main function to tie everything up:
+```c
+int main (void) {
+    usart2_init_115200();
+
+    usart2_write_byte('A'); // Send the char A
+    while ((USART2->SR & USART_SR_TC) == 0) {
+        // wait for TX complete
+    }
+
+    for (;;) {
+        //do stuff
+    }
+}
+```
+
+Here is the full code:
+```c
+static void usart2_init_115200(void) {
+    // Clocks: GPIOA on APB2, USART2 on APB1
+
+    // Enable the APB2 peripheral clock and direct it to GPIOA (IOPAEN), Turn on AFIO
+    RCC->APB2ENR |= RCC_APB2ENR_IOPAEN | RCC_APB2ENR_AFIOEN;
+
+    // Enable the APB1 peripheral clock and direct it to USART2
+    RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+
+    // TX (PA2): Alternate function push pull, 50MHz
+    // CNF=10, MODE=11, bit mask = 0b1011 = 0xB
+    GPIOA->CRL &= ~(0xFu << (2 *4)); // reset the 4 bit field
+    GPIOA->CRL |= (0xBu << (2 * 4)); // write 1011
+
+    // RX (PA3): Input floating
+    // CNF=01, MODE=00, bit mask = 0b0100 = 0x4
+    GPIOA->CRL &= ~(0xFu << (3 * 4));
+    GPIOA->CRL |= (0x4u << (3 * 4));
+
+    // Set baud 115200, PCLK = 36MHz 
+    USART2->BRR = 0x1388;
+
+    // Enable USART, TX, RX
+    USART2->CR1 |= USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
+}
+
+
+static void usart2_write_byte(uint8_t b) {
+    // Wait for TXE=1
+    while ((USART2->SR & USART_SR_TXE) == 0) {
+        //spin
+    }
+    USART2->DR = b; // Writing DR clears TXE and starts shifting the byte b
+}
+
+
+int main (void) {
+    usart2_init_115200();
+
+    usart2_write_byte('A'); // Send the char A
+    while ((USART2->SR & USART_SR_TC) == 0) {
+        // wait for TX complete
+    }
+
+    for (;;) {
+        //do stuff
+    }
+}
+
+```
+
+Lastly, Avoid using pure C bit-fields (structs) for registers. They can break with implementation specific layouts, padding, and non-atomic practices. For hardware registers, masks and shifts are the robust and portable way to do it.
 
 That is all.
 
