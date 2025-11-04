@@ -117,7 +117,6 @@ A << 2 = 00001100 = 12 decimal
 Each position the value is shifted to the left, the value doubles, or the value is multiplied by 2**n, as long as it does not exceed (overflow) the register max bit range. This requires less compute than a typical multiplication routine. Where the end bit, big or small, moves into the register a 0 is initialised in the now "empty" spot. There are exceptions for signed integers where the sign bit is preserved.
 
 
-
 **Bitwise shift right >> n** <br>
 Like the left shift but shift all bits right (decrease) by n places.
 
@@ -205,6 +204,7 @@ Result:
 ```bash
 >>> 00110110
 ```
+
 
 # How might it be useful for embedded... flags
 
@@ -335,9 +335,10 @@ int main (void) {
 }
 ```
 
+
 # Enabling Flags
 
-We will do this by using a bit wise OR operator, and rather than using the decimal values we will use direct binary represention using the 0b prefix (Only supported in C23 and greater), so the decimal value 2 = 0b10, 3 = 0b11, 4 = 0b100, etc. If you are using <C23 then convert this to hex representation.
+Using the bit wise OR operator you can statrt enabling things like flags in a register, and for this section rather than using the decimal values we will use direct binary represention using the 0b prefix (Only supported in C23 and greater), so the decimal value 2 = 0b10, 3 = 0b11, 4 = 0b100, etc. If you are using <C23 then you have to momentarily jump ahead and convert this to hex representation.
 
 To set flag 0 from 0 to 1, without impacting the other flag bits, we simply bitwise OR it with 0b1, add this to the end of the main loop:
 
@@ -456,7 +457,25 @@ int main (void) {
 }
 ```
 
-# Now it's starting to look like something for embedded...
+# Now it's starting to look like embedded, prepare to be vexed, hexed, and nibbled!
+Okay so we have blown a cannon ball through manny of the abstract layers and you should find yourself staring at bare metal. So if everything inside a microcontroller is binary, why don't we just write binary literals directly using 0b? Enter the hexadecimal.
+
+Hexadecimal is a base 16 representation as shown in the image below:
+![binary, hex, decimal](docs/assets/img/blog-09-bin-dec-hex-conversion.png)
+
+Base 16 means values van be represented in a compact manner, for example if we wanted to set the decmial value: ```40960``` in binary that would be: ```0b1010000000000000```, but in hexadecimal it is ```0xA000```. There are a lot fo zeros in that binary, it would be very easy to miss one out, causing all sorts of chaos leaving you vexed. As you might have guessed the 0x prepend tells C that the value is encoded in hexadecimal.
+
+Each hex digit can be represented by 4 binary bits as seen in the image above, this is known as a nibble! (Half a byte). This makes it easy to convert between binary and hex, you just split the binary into nibbles and use the table above: ```0xA000 = 1010 0000 0000 0000```. A nibble aligns quite nicely with much in embedded such as 8, 16, 32 bit and so on registers. So a 32 bit register can be represented by 8 hexadecimal digits.
+
+Hexadecimal is not so good for visualising bit masks so you will often see conversions but it is always used to set registers due to it being the widely accepted convetion and much more long standing representation in the C language (since 1989) than the 0b specificer.
+
+Lastly, on the point of expressing bit masks, in production code you would often avoid this all together by defining bits with macros. For example defining a decimal 1 unsigned as we previously have, and the left shifting it to the position you want to create the bit mask and assigning it to a #define like so:
+
+```c
+#define USART_CR1_TE (1U << 3) // shifts decimal 1 left by 3 places = 0b1000 = 0x8
+```
+
+# Now it's actually starting to look like embedded...
 
 In STM32, peripheral registers are memory-mapped. You read/write bits to configure hardware or check status flags. CMSIS gives you typed structs (e.g., GPIOA, USART2, RCC) so you can do clean and safe bit operations. Note that in the previous example we have used the pure C binary specifier 0bxx... however for embedded it is typically better to use hex as 0b can be compiler and implementaiton specific (brought in in C23). For hex representation 0x is used at the beginning and u at the end to denote unsigned, so a unsigned int 3 in hex is ```0x3u```.
 
