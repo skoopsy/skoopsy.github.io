@@ -458,21 +458,23 @@ int main (void) {
 ```
 
 # Now it's starting to look like embedded, prepare to be vexed, hexed, and nibbled!
-Okay so we have blown a cannon ball through manny of the abstract layers and you should find yourself staring at bare metal. So if everything inside a microcontroller is binary, why don't we just write binary literals directly using 0b? Enter the hexadecimal.
+We've have blown a cannonball through many of the abstract layers, and you should now find yourself staring at bare metal. 
+
+If everything inside a microcontroller is binary, why don't we just write binary literals directly using 0b like we did in the above macro definition... Enter the hexadecimal.
 
 Hexadecimal is a base 16 representation as shown in the image below:
-![binary, hex, decimal](docs/assets/img/blog-09-bin-dec-hex-conversion.png)
+![binary, hex, decimal](/docs/assets/img/blog-09-bin-dec-hex-conversion.png)
 
-Base 16 means values van be represented in a compact manner, for example if we wanted to set the decmial value: ```40960``` in binary that would be: ```0b1010000000000000```, but in hexadecimal it is ```0xA000```. There are a lot fo zeros in that binary, it would be very easy to miss one out, causing all sorts of chaos leaving you vexed. As you might have guessed the 0x prepend tells C that the value is encoded in hexadecimal.
+Base 16 allows values to be represented in a compact manner, for example if we wanted to set the decmial value: ```40960``` in binary that would be: ```0b1010000000000000```, but in hexadecimal it is ```0xA000```. There are a lot of zeros in that binary, it would be very easy to miss one out, causing all sorts of chaos leaving you vexed. As you might have guessed the 0x prepend tells C that the value is encoded in hexadecimal.
 
 Each hex digit can be represented by 4 binary bits as seen in the image above, this is known as a nibble! (Half a byte). This makes it easy to convert between binary and hex, you just split the binary into nibbles and use the table above: ```0xA000 = 1010 0000 0000 0000```. A nibble aligns quite nicely with much in embedded such as 8, 16, 32 bit and so on registers. So a 32 bit register can be represented by 8 hexadecimal digits.
 
-Hexadecimal is not so good for visualising bit masks so you will often see conversions but it is always used to set registers due to it being the widely accepted convetion and much more long standing representation in the C language (since 1989) than the 0b specificer.
+Hexadecimal is not so good for visualising bit masks so you will often see conversions but it is always used preferentially over the binary 0b representation due to it being the widely accepted convetion and much more long standing representation in the C language (since 1989) than the 0b specificer. Being more compact and it being the overall convention in most datasheets and headers.
 
-Lastly, on the point of expressing bit masks, in production code you would often avoid this all together by defining bits with macros. For example defining a decimal 1 unsigned as we previously have, and the left shifting it to the position you want to create the bit mask and assigning it to a #define like so:
+Lastly, on the point of expressing bit masks, in production code you would often avoid this all together by defining bits with macros and shifting them to where you want. For example defining a decimal 1 unsigned as we previously have, and then left shifting it to the position you want to create the bit mask for and assigning it to a #define. This example here for USART TX enable flag makes it bvery clear we are assigning bit 3 in the register:
 
 ```c
-#define USART_CR1_TE (1U << 3) // shifts decimal 1 left by 3 places = 0b1000 = 0x8
+#define USART_CR1_TE (1U << 3) // shifts decimal 1 left by 3 places = 0b1000 = 0x08
 ```
 
 # Now it's actually starting to look like embedded...
@@ -619,7 +621,7 @@ USARTDIV: Unsigned fixed point number coded on the USART_BRR register.
 
 However it isn't quite that simple. If we set the baud rate to 115200, with the PCLK1 at 36 MHz. BRR = fPCLK / 16*baud = 36,000,000 / (16*115,200) = 19.53125. However, recalling the statement from RM0008 above the BRR is based on the mantissa (part of a floating point number representing the significant digits) and fraction values (as ints). So the number must be rounded to fit nicely into the registers. The following table from RM0008 suggests 19.5:
 
-![Table 192. Error calculation for pregrammied baud rates](docs/assets/img/blog-09-baud.png)
+![Table 192. Error calculation for pregrammied baud rates](/docs/assets/img/blog-09-baud.png)
 
 For the USART_BRR register, the USARTDIV is split into:
 * USART_BRR[15:4] is the mantissa (12 bits)
@@ -641,16 +643,16 @@ So lets add that to the init function:
     USART2->BRR = 0x1388;
 ```
 
-On a side note if PCLK1 = 72 MHz you'll notice in the table that at 115200 baus is exactly 39 + 1/16 producing 0% error.
+On a side note if PCLK1 = 72 MHz you'll notice in the table that at 115200 baud is exactly 39 + 1/16 producing 0% error.
 
-Now we can ebale the USART, and the TX and RX!
+Now we can enable the USART, and the TX and RX!
 ```c
     USART2->CR1 |= USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
 ```
 If word length, partity and stop btis need to be changed ser CR1 and CR2 accordingly before setting UE.
 Now we are done with our initiliase funciton.
 
-Lets produce a small function to write bytes to usart 2:
+Lets produce a small function to write bytes to USART2:
 ```c
 static void usart2_write_byte(uint8_t b) {
     // Wait for TXE=1
@@ -727,10 +729,9 @@ int main (void) {
         //do stuff
     }
 }
-
 ```
 
-Lastly, Avoid using pure C bit-fields (structs) for registers. They can break with implementation specific layouts, padding, and non-atomic practices. For hardware registers, masks and shifts are the robust and portable way to do it.
+Lastly, avoid using pure C bit-fields (structs) for registers. They can break with implementation specific layouts, padding, and non-atomic practices. For hardware registers, masks and shifts are the robust and portable way to do it.
 
 That is all.
 
