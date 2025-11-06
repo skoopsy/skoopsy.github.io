@@ -469,7 +469,7 @@ Base 16 allows values to be represented in a compact manner, for example if we w
 
 Each hex digit can be represented by 4 binary bits as seen in the image above, this is known as a nibble! (Half a byte). This makes it easy to convert between binary and hex, you just split the binary into nibbles and use the table above: ```0xA000 = 1010 0000 0000 0000```. A nibble aligns quite nicely with much in embedded such as 8, 16, 32 bit and so on registers. So a 32 bit register can be represented by 8 hexadecimal digits.
 
-Hexadecimal is not so good for visualising bit masks so you will often see conversions but it is always used preferentially over the binary 0b representation due to it being the widely accepted convetion and much more long standing representation in the C language (since 1989) than the 0b specificer. Being more compact and it being the overall convention in most datasheets and headers.
+Hexadecimal is not so good for visualising bit masks so you will often see conversions but it is always used preferentially over the binary 0b representation due to it being the widely accepted convetion and much more long standing representation in the C language (since 1989) than the 0b specificer. It is typically the convention used in most datasheets and headers.
 
 Lastly, on the point of expressing bit masks, in production code you would often avoid this all together by defining bits with macros and shifting them to where you want. For example defining a decimal 1 unsigned as we previously have, and then left shifting it to the position you want to create the bit mask for and assigning it to a #define. This example here for USART TX enable flag makes it bvery clear we are assigning bit 3 in the register:
 
