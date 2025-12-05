@@ -6,11 +6,11 @@ categories: STM32
 ---
 Board: WeActStudio BluePill Plus STM32 F103CBT8 (Arm Coretex M3)
 
-So the Nucleo board is okay, but a little outdated and quite bulky. A much more popular alternative amoungst the maker community are the Bluepill (and Blackpill) development boards, which can be picked up for next to nothing on aliexpress. They became popular becuase there was a variation that could be written to with the Arduino IDE in arduino style code which made them very accessible. I have decided to switch my learning to one of these flavour of boards, and will be trying to get slightly closer to the hardware by using libopencm3 rather than STM32 HAL, and so picked myself up a slightly modernised WeActStudio Bluepill Plus with a ST STM32F103CBT6 chip. It is very similar to the nucleo board but more powerful, smaller, cheaper, and more widely used. It is probably a counterfit/used chip considering the whole dev board was £2.09!
+The Nucleo board is outdated and quite bulky. A more popular alternative would be the Bluepill (and Blackpill) development boards, which can be picked up for next to nothing on aliexpress. They became popular becasue there was a variation that could be utlilise the Arduino IDE in arduino style code which made them very accessible. I will be trying to get slightly closer to the hardware by using libopencm3 rather than STM32 HAL, and so picked myself up a slightly modernised WeActStudio Bluepill Plus with a STM32F103CBT6 micro. It is very similar to the nucleo board but more powerful, smaller, cheaper, and more widely used. It is probably a counterfit/used chip considering the whole dev board was £2.09!
 
-Here is a link to the SoC specs/documentation on the [ST Site](https://www.st.com/en/microcontrollers-microprocessors/stm32f103cb.html). It has a Cortex M3 processor rather than the Cortex M0 of the Nucleo board we used before. The common Bluepill comes with a chip ending in C8T6, where as I have the CBT6 version which comes with additional 64 MB of flash memory. Lastly, I managed to get a version with USB-C. Following along with a Bluepill or Bluepill Plus will be almost identicle, just keep any eye on the pinouts.
+Here is a link to the SoC specs/documentation on the [ST Site](https://www.st.com/en/microcontrollers-microprocessors/stm32f103cb.html). It has a Cortex M3 processor rather than the Cortex M0 of the Nucleo board we used before. The common Bluepill comes with a chip ending in C8T6, where as I have the CBT6 version which comes with additional 64 MB of flash memory. Lastly, I managed to get a version with USB-C. Following along with a Bluepill or Bluepill Plus will be almost identicle, just keep an eye on the pinouts.
 
-![Picture of board](/docs/assets/img/blog-03-4-bluepillplus.png)
+![Picture of board](/docs/assets/img/blog-07-pinout.png)
 
 Here is a link to the ST Reference manual for the chip series: [RM0008](
 https://www.st.com/resource/en/reference_manual/rm0008-stm32f101xx-stm32f102xx-stm32f103xx-stm32f105xx-and-stm32f107xx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf)
@@ -25,8 +25,7 @@ Here is the pinout for the WeActStudio BluePill Plus, it is almost identicle the
 - SWD debug header with full pinout
 - If they uploaded the bootloader you may be able to use USB DFU out of the box
 
-For now the standard bluepill pinout will do, just noting the minor differences:
-![Picture of WAS bluepill+ pinout](/docs/assets/img/bluepill-plus-pinout.png)
+![Picture of WAS bluepill+ pinout](/docs/assets/img/blupill-plus-pinout.png)
 
 # Connecting the board
 We will assume the need for an ST-LInk V2 here, although you may be able to get away with direct USB. Once your pin headers are soldered to the bluepill, hook up the ST-Link GND, SCK, DIO, and 3V3 pins to the SWD pins on the bluepill. 
@@ -49,7 +48,7 @@ Now hook up your ST-LINK V2 emulator, if the board powers on; open a terminal an
 st-info --probe
 ```
 
-If you are on Windows I recommend using windows subsystem for linux for all this development, but if you must use Windows the checkout the [Windows STM32 ST-Link Utility](https://www.st.com/en/development-tools/stsw-link004.html).
+If you are on Windows I recommend using windows subsystem for linux for all this development, but if you must use Windows then checkout the [Windows STM32 ST-Link Utility](https://www.st.com/en/development-tools/stsw-link004.html).
 
 If the board is not connecting correctly, the output may look like this:
 ```
@@ -83,7 +82,7 @@ You can also read, write, and erase the flash memory directly with the st-link t
 
 # libopencm3
 
-[libopencm3](https://github.com/libopencm3/libopencm3/wiki) is a open source hardware abstration library for the ARM chips. It is lower level than the STM32 HAL but not as unfriendly as bare metal. It seems like a greate scaleable platform with a very reasonable license. For example this provides a nice API for accessing the GPIO pins, dealing with tickers, and setting interupts.
+[libopencm3](https://github.com/libopencm3/libopencm3/wiki) is a open source hardware abstration library for the ARM chips. It is lower level than the STM32 HAL but not as unfriendly as bare metal. It's a scaleable platform with a very reasonable license. For example; this provides a nice API for accessing the GPIO pins, dealing with tickers, and setting interupts.
 
 To build the library you will need to install an arm toolchain such as [gcc-arm-embedded](https://developer.arm.com/downloads/-/gnu-rm) which can also be done via apt in linux. See my [Getting Started with Embedded](https://skoopsy.dev/stm32/2025/03/14/STM32-1-getting-started.html) post for an explanation of all the different ARM tool chains and where they fit in.
 
