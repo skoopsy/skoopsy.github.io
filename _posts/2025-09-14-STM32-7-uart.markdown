@@ -163,13 +163,11 @@ Create your main.c file and include the uart header:
 
 Write a small main loop to send some stuff over uart using the uart_send_String command we made:
 ```c
-uart_init();
-
 int main(void) {
-
-    uart_send_string("UART TX works, wahooo!");
-
-    while(1);
+    uart_init();
+    while(1){
+        uart_send_string("UART TX works, wahooo!");
+    }
 }
 ```
 
@@ -277,9 +275,11 @@ Now write the main function to iterate a counter, print the message and then wai
 int count = 0;
 
 int main(void) {
+    uart_init();
+    char message[] = "Wohoo UART works!";
+
     while(1){
-        uart_init();
-        char message[] = "Wohoo UART works!";
+        
         print_to_uart(message, count);
         ++count;
         for (volatile uint32_t i=0; i<800000; i++){
