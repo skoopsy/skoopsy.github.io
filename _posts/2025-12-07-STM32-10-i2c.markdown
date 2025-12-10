@@ -1,0 +1,76 @@
+---
+layout: post
+title:  "STM32 #10: I2C on STM32F1 with libopencm3"
+date:   2025-12-07 10:00:00 +0000
+categories: STM32
+---
+
+After a bit of searching it seemed I was not going to find a nice library to use some of the peripheral boards I have in mind, especially whilst trying to avoid the cubeIDE. Which lead me to realising I was probably going to have to write my own driver...
+
+# I2C Basics:
+
+Inter-Intergrated circuit protocol (I2C, pronounced “I squared C”) is a synchronous, multi-master, multi-slave, packet switched, single-ended serial bus which was invented by Phillips Semiconductor. It is often used for communicating with low=speed peripherals from a micro in short distance applications such as intraboard comms.
+
+2 connections:
+
+- SDA - Serial Dataline Line
+- SCL - Serial Clock Line - at the same frequency as the data bits
+
+Both will often have a pull up resistor to reduce noise in high state.
+
+You need to known the data length (packet size) in bits, and the clock frequency for both the TX and RX, and the device address.
+
+The master TX can communicate with multiple slave RX via the use of a slave address. It will send the slave address first, and then the data.
+
+Because there is a single dateline this is considered a Simplex system. 
+
+Typical data rates:
+
+- Standard mode = 100 kbit/s
+- Fast mode = 400 kbit/s
+- Fast mode plus = 1 Mbit/s
+- High speed mode = 3.4 Mbit/s
+- Ultra fast mode = 5 Mbit/s
+
+## I2C Protocol
+
+Start condition | 7 bit address | r/w bit | ACK / NACK bit | 8 data bits | ACK/NACK bit | …repeat | stop condition
+
+ACK - Acknowledge from RX
+NACK - Not acknowledge bit from RX
+
+
+# Some key considerations on the STM32F1
+After some searching some common snags seemed to consistently appear so I will try to dig deep into the understanding of the following topics:
+- The clock tree and why I2C CR2 register matters
+- The GPIO config - Open drain, AF mode, 50 MHz drive speed
+- The timing registers CCR and TRISE
+- Startup sequence that prevents bus lock
+- Difference between write, read, repeated start, ACK control, and stop generation
+
+Then I will develop a driver.
+
+
+
+
+STM32F102
+
+Which bus are I2C on - check RM0008
+	- APB1
+Which pins are I2C on - Check RM0009
+	I2C1 - PB6 (SCL), PB7 (SDA)
+	I2C2 - PB10 (SCL), PB11 (SDA)
+
+
+
+
+<script src="https://utteranc.es/client.js"
+        repo="skoopsy/skoopsy.github.io"
+        issue-term="pathname"
+        label="blog-embedded10"
+        theme="preferred-color-scheme"
+        crossorigin="anonymous"
+        async>
+</script>
+
+Copyright © 2025 David O'Connor
