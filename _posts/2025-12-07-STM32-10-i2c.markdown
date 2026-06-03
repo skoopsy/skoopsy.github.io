@@ -73,6 +73,7 @@ We will need to include a few modules from libopencm3:
 ```
 
 Lets begin with i2c initialisation, we will use the i2c1 pins:
+
 | Pin | Function |
 |-----|----------|
 | PB6 | SCL1     |
@@ -111,7 +112,7 @@ Now we move onto the I2C config which will be inside the same init function as a
     i2c_set_standard_mode(I2C1); // 100kHz, can go to fast mode for 400 kHz if needed
 ```
 
-Now setting the ccr frequency confused me to no end and I had to quite quite a deep dive into the docs for this. The system clock on the STM32f103x is set to SYSCLK=72MHz, the ABP1 bus is half this due to the prescaler being 2 so APB1=36MHz, and f_PCLK1 = SYSCLK/2 = 36 MHz, so if the target speed is standard mode which is 100 kHz (Fslc) then to calculate the CCR value use the following equation:
+Now setting the CCR frequency confused me to no end and I had to do a deep dive into the docs for this. The system clock on the STM32f103x is set to SYSCLK=72MHz, the ABP1 bus is half this due to the prescaler being 2 so APB1=36MHz, and f_PCLK1 = SYSCLK/2 = 36 MHz, so if the target speed is standard mode which is 100 kHz (Fslc) then to calculate the CCR value use the following equation:
 
 CCR = fpclk1 / (2*Fscl) = 36,000,000 / (2 * 100,000) = 180
 
@@ -189,7 +190,7 @@ e.g. if i wanted to write 0x03 into register 0x09, the transmit buffer would con
 uint8_t data[2] = {0x09, 0x03};
 ```
 
-so a simple write function to a 7 bit address would look like
+so a simple write function to a 7 bit address using libopencm3 I2C_transfer7() would look like
 
 ```c
 i2c_status_t i2c_write(uint8_t add7,
