@@ -5,22 +5,22 @@ date:   2025-12-20 10:00:00 +0000
 categories: STM32
 ---
 
-After a bit of searching it seemed I was not going to find a nice library to use some of the peripheral boards I have in mind, especially whilst trying to avoid the STM32cubeIDE. Which lead me writing drivers... forgive me.
+After a bit of searching it seemed I was not going to find a nice library to use some of the peripheral boards I have in mind, especially whilst trying to avoid the STM32cubeIDE. Which lead me writing drivers...
 
 # I2C Basics:
 
-Inter-Intergrated circuit protocol (I2C, pronounced “I squared C”) is a synchronous, multi-master, multi-slave, packet switched, single-ended serial bus which was invented by Phillips Semiconductor. It is often used for communicating with low-speed peripherals from a micro in short distance applications such as intraboard comms.
+Inter-Intergrated Circuit protocol (I2C, pronounced “I squared C”) is a synchronous, multi-master, multi-slave, single-ended serial bus which was invented by Phillips Semiconductor. It is often used for communicating with low-speed peripherals from a micro in short distance applications such as intraboard comms.
 
 2 connections:
 
 - SDA - Serial Dataline Line
 - SCL - Serial Clock Line - at the same frequency as the data bits
 
-Both will often have a pull up resistor to reduce noise in the high state.
+Both SDA and SCL are normally open-drain lines. Devices can pull the line low, but they do not actively drive it high. Adding pull-up resistors bring the lines back to 3.3 V when nobody is pulling them down.
 
-You need to know the data length (packet size) in bits, the clock frequency for both the TX and RX, and the device address. The master TX can communicate with multiple slave RX via the use of a slave address. It will send the slave address first, and then the data.
+You need to know the data length (packet size) in bits, the clock frequency for both the TX and RX (only defined by the controller), and the device address. The master TX can communicate with multiple slave RX via the use of a slave address. It will send the slave address first, and then the data.
 
-Because there is a single line with data flowing in one direction at a time; this is considered a "Simplex" system. 
+Because SDA is shared for both transmit and recieve, data only moves in one direction at a time, making I2C half-duplex rather than full-duplex. 
 
 Typical data rates:
 
@@ -39,18 +39,19 @@ Start condition | 7 bit address | r/w bit | ACK / NACK bit | 8 data bits | ACK/N
 ACK - Acknowledge from RX
 NACK - Not acknowledge bit from RX
 
+Most I2C sensors expose internal registers. To read one of these registers, the master usually writes the register address first, then performs a repeated-start and reads the returned byte or bytes. This is why embedded I2C drivers often provide a write-read function rather than only separate write and read functions.
+
 
 # Some considerations for the STM32F1x
-Some common snags seem to consistently be mentioned online so I will try to dig deep into the understanding of the following topics:
+Some common snags seem to consistently be mentioned online are:
 - The clock tree and why I2C CR2 register matters
 - The GPIO config - Open drain, AF mode, 50 MHz drive speed
 - The timing registors CCR and TRISE
 - Startup sequence that prevents bus lock
 - Difference between write, read, repeated start, ACK control, and stop generation
 
-Then I will develop a driver.
 
-STM32F103x
+# STM32F103x
 
 Which bus is I2C on - check RM0008
 	- APB1
@@ -59,7 +60,8 @@ Which pins are I2C on - Check RM0009
 	I2C1 - PB6 (SCL), PB7 (SDA)
 	I2C2 - PB10 (SCL), PB11 (SDA)
 
-# Building an i2c module with libopencm3 for STM32F103x
+
+# Building an I2C module with libopencm3 for STM32F103x
 
 We will need to include a few modules from libopencm3:
 
@@ -208,7 +210,7 @@ i2c_status_t i2c_write(uint8_t add7,
 
         return I2C_OK;
 }
-
+```
 The parameters are:
 
 - uint8t addr7 - A 7 bit address of the I2C device.
