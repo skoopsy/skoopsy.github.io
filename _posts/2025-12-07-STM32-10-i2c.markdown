@@ -1,28 +1,26 @@
 ---
 layout: post
-title:  "STM32 #10: I2C on STM32F1 with libopencm3"
-date:   2025-12-07 10:00:00 +0000
+title:  "STM32 #9: I2C on STM32F1 with libopencm3"
+date:   2025-12-20 10:00:00 +0000
 categories: STM32
 ---
 
-After a bit of searching it seemed I was not going to find a nice library to use some of the peripheral boards I have in mind, especially whilst trying to avoid the cubeIDE. Which lead me to realising I was probably going to have to write my own driver...
+After a bit of searching it seemed I was not going to find a nice library to use some of the peripheral boards I have in mind, especially whilst trying to avoid the STM32cubeIDE. Which lead me writing drivers... forgive me.
 
 # I2C Basics:
 
-Inter-Intergrated circuit protocol (I2C, pronounced “I squared C”) is a synchronous, multi-master, multi-slave, packet switched, single-ended serial bus which was invented by Phillips Semiconductor. It is often used for communicating with low=speed peripherals from a micro in short distance applications such as intraboard comms.
+Inter-Intergrated circuit protocol (I2C, pronounced “I squared C”) is a synchronous, multi-master, multi-slave, packet switched, single-ended serial bus which was invented by Phillips Semiconductor. It is often used for communicating with low-speed peripherals from a micro in short distance applications such as intraboard comms.
 
 2 connections:
 
 - SDA - Serial Dataline Line
 - SCL - Serial Clock Line - at the same frequency as the data bits
 
-Both will often have a pull up resistor to reduce noise in high state.
+Both will often have a pull up resistor to reduce noise in the high state.
 
-You need to known the data length (packet size) in bits, and the clock frequency for both the TX and RX, and the device address.
+You need to know the data length (packet size) in bits, the clock frequency for both the TX and RX, and the device address. The master TX can communicate with multiple slave RX via the use of a slave address. It will send the slave address first, and then the data.
 
-The master TX can communicate with multiple slave RX via the use of a slave address. It will send the slave address first, and then the data.
-
-Because there is a single dateline this is considered a Simplex system. 
+Because there is a single line with data flowing in one direction at a time; this is considered a "Simplex" system. 
 
 Typical data rates:
 
@@ -32,6 +30,8 @@ Typical data rates:
 - High speed mode = 3.4 Mbit/s
 - Ultra fast mode = 5 Mbit/s
 
+An explanation of I2C can be found on the [sparkfun website](https://learn.sparkfun.com/tutorials/i2c/all)
+
 ## I2C Protocol
 
 Start condition | 7 bit address | r/w bit | ACK / NACK bit | 8 data bits | ACK/NACK bit | …repeat | stop condition
@@ -40,34 +40,284 @@ ACK - Acknowledge from RX
 NACK - Not acknowledge bit from RX
 
 
-# Some key considerations on the STM32F1
-After some searching some common snags seemed to consistently appear so I will try to dig deep into the understanding of the following topics:
+# Some considerations for the STM32F1x
+Some common snags seem to consistently be mentioned online so I will try to dig deep into the understanding of the following topics:
 - The clock tree and why I2C CR2 register matters
 - The GPIO config - Open drain, AF mode, 50 MHz drive speed
-- The timing registers CCR and TRISE
+- The timing registors CCR and TRISE
 - Startup sequence that prevents bus lock
 - Difference between write, read, repeated start, ACK control, and stop generation
 
 Then I will develop a driver.
 
+STM32F103x
 
-
-
-STM32F102
-
-Which bus are I2C on - check RM0008
+Which bus is I2C on - check RM0008
 	- APB1
+
 Which pins are I2C on - Check RM0009
 	I2C1 - PB6 (SCL), PB7 (SDA)
 	I2C2 - PB10 (SCL), PB11 (SDA)
 
+# Building an i2c module with libopencm3 for STM32F103x
 
+We will need to include a few modules from libopencm3:
 
+```c
+#include <libopencm3/stm32/rcc.h>
+#include <libopencm3/stm32/gpio.h>
+#include <libopencm3/stm32/i2c.h>
+#include <libopencm3/stm32/common/i2c_common_v1.h>
+```
+
+Lets begin with i2c initialisation, we will use the i2c1 pins:
+| Pin | Function |
+|-----|----------|
+| PB6 | SCL1     |
+| PB7 | SDA1     |
+
+On both of these pins I have added 4.7 kOhm pullups to 3.3v 
+
+Lets write the initialisation function, starting with the clocks and GPIO pin setups that we have covered before, these pins are on GPIO bus B, you will also have to activate the clock for I2C1:
+
+```c
+void i2c1_init(void) {
+    // Initialise i2c1 on PB6 and PB7
+
+    // Clocks
+    rcc_periph_clock_enable(RCC_GPIOB);
+    rcc_periph_clock_enable(RCC_I2C1);
+
+    // GPIOs
+    gpio_set_mode(GPIOB,
+                  GPIO_MODE_OUTPUT_50_MHZ,
+                  GPIO_CNF_OUTPUT_ALTFN_OPENDRAIN,
+                  GPIO6 | GPIO7);
+
+}
+```
+Here we have set PB6 and 7 to be open drain for the I2C to function.
+
+Now we move onto the I2C config which will be inside the same init function as above, I have given some details in the comments:
+
+```c
+//i2c1_init(void) { continued...
+
+    // i2c config
+    i2c_prtipheral_disable(I2C1); // The docs recommend this before changing any configs
+    i2c_set_clock_frequency_(I2C1, 36); // Must match the APB1 frequency, the prescaler is 2 so 72/2
+    i2c_set_standard_mode(I2C1); // 100kHz, can go to fast mode for 400 kHz if needed
+```
+
+Now setting the ccr frequency confused me to no end and I had to quite quite a deep dive into the docs for this. The system clock on the STM32f103x is set to SYSCLK=72MHz, the ABP1 bus is half this due to the prescaler being 2 so APB1=36MHz, and f_PCLK1 = SYSCLK/2 = 36 MHz, so if the target speed is standard mode which is 100 kHz (Fslc) then to calculate the CCR value use the following equation:
+
+CCR = fpclk1 / (2*Fscl) = 36,000,000 / (2 * 100,000) = 180
+
+Setting the rise time for each bit has a simialr equation in the docs:
+
+trise = (trise(max) / TPCLK1) + 1
+
+trise(max) is typically 1000 ns for standard I2C protocol
+
+TPCLK = 1 / f_PCLK1 = 1 / 36 Mhz = 27.78 ns
+
+So,
+
+trise = (1000 / 27.78) + 1 = 37 
+
+```c
+    i2c_set_ccr(I2C1, 180);
+    i2c_set_trise(I2C1, 37)
+```
+
+Finally in the init function we can now enable the i2c peripheral:
+
+```c
+    i2c_peripheral_enable(I2C1);
+```
+
+Don't forget to close the brackets!
+
+Now create a header file (.h) and add the function
+
+```c
+bsp_i2c1_init(void);
+```
+
+make sure to include this new header file in your i2c.c file!
+
+Now you can initialise an I2C connection, next lets add a write then read function so that we can address a register and read it's contents:
+
+# Adding a small I2C wrapper
+I don't really want to have the rest of my project calling libopencm3s i2c_transfer7() function directly everywhere so we will make a small wrapper for it. For this we will start with two simple operations
+
+```c
+i2c_write();
+i2c_write_read();
+```
+
+The first is used when writing data to a device, like writing a value into a sensor register. The second is used more commonly for writing a register address and then read the data back. Which is how many I2C peripheral sensors work.
+
+Before writing the functions its useful to define some status types for debugging:
+
+```c
+typedef enum {
+    I2C_OK = 0,
+    I2C_ERR_TIMEOUT,
+    I2C_ERR_BUS,
+    I2C_ERR_PARAM,
+} i2c_status_t;
+```
+
+This makes the driver interface a bit cleaner, rather than returning random numbers it can return something useful, for example
+
+```c
+if (status != I2C_OK) {
+    // Do somehting about the error!
+}
+```
+
+At this stage I'm only going to implement I2C_OK and I2C_ERR_PARAM, but having a timeout and bus errors will be useful for the future.
+
+# Write only transaction
+Mostly used to configure a I2C peripheral.
+
+e.g. if i wanted to write 0x03 into register 0x09, the transmit buffer would contain:
+```c
+uint8_t data[2] = {0x09, 0x03};
+```
+
+so a simple write function to a 7 bit address would look like
+
+```c
+i2c_status_t i2c_write(uint8_t add7,
+                       const uint8_t *tx,
+                       size_t tx_len)
+
+{
+        if (!tx || tx_len == 0) {
+            return I2C_ERR_PARAM;
+        }
+
+        I2C_transfer7(I2C1,
+                      addr7,
+                      (uint8_t *)tx,
+                      tx_len,
+                      NULL,
+                      0);
+
+        return I2C_OK;
+}
+
+The parameters are:
+
+- uint8t addr7 - A 7 bit address of the I2C device.
+- const uint8_t *tx - A pointer to the bytes to send.
+- size_t tx_len - The number of bytes to send.
+
+The NULL, 0 at the end just tells the transfer function that there is no read phase.
+So this function does the following:
+
+START -> address + write bit -> send bytes -> STOP
+
+# Write then read transaction
+
+Reading from a register is slightly different. The micro normally has to write the register address first, and then read the returned data. A generic write the read would look like:
+
+```c
+i2c_status_t i2c_write_read(uint8_t addr7,
+                            const uint8_t *tx,
+                            size_t tx_len,
+                            uint8_t *rx,
+                            size_t rx_len)
+{
+    if (!tx || !rx || tx_len == 0 || rx_len == 0) {
+        return I2C_ERR_PARAM;
+    }
+
+    i2c_transfer7(I2C1,
+                  addr7,
+                  (uint8_t *)tx,
+                  tx_len,
+                  rx,
+                  rx_len);
+
+    return I2C_OK;
+}
+```
+
+an example of using this would be:
+```c
+uint8_t reg = 0x0F;
+uint8_t value = 0;
+
+i2c_write_read(0x58, &reg, 1, &value, 1);
+```
+
+This will do the following:
+
+1. Talk to the device at 0x58
+2. Write one byte: 0x0F
+3. Read one byte back into value
+
+So on the bus this is what you would see:
+
+START -> address + write bit -> register address -> repeated start -> address + read bit -> read byte -> STOP
+
+The repeated start matters because it keeps the transaction connected. The device sees the first byte as the register address, then immediately returns the data from that register during the read phase.
+
+Here is what the header file would look like to give you some assistance in building this:
+
+```c
+#pragma once
+
+#include <stdint.h>
+#include <stddef.h>
+
+typedef enum {
+    I2C_OK = 0,
+    I2C_ERR_TIMEOUT,
+    I2C_ERR_BUS,
+    I2C_ERR_PARAM,
+} i2c_status_t;
+
+void i2c1_init(void);
+
+i2c_status_t i2c_write(uint8_t addr7,
+                       const uint8_t *tx,
+                       size_t tx_len);
+
+i2c_status_t i2c_write_read(uint8_t addr7,
+                            const uint8_t *tx,
+                            size_t tx_len,
+                            uint8_t *rx,
+                            size_t rx_len);
+```
+
+A basic register write example:
+```c
+uint8_t config[2] = {
+    0x09,   // register address
+    0x03    // value to write
+};
+
+i2c_write(0x57, config, 2);
+```
+
+A register read example:
+```c
+uint8_t reg = 0xFF;
+uint8_t part_id = 0;
+
+i2c_write_read(0x57, &reg, 1, &part_id, 1);
+```
+
+This gives enough of an I2C layer to start writing sensor drivers without dragging all of the low-level setup into the application code.
 
 <script src="https://utteranc.es/client.js"
         repo="skoopsy/skoopsy.github.io"
         issue-term="pathname"
-        label="blog-embedded10"
+        label="blog-embedded9"
         theme="preferred-color-scheme"
         crossorigin="anonymous"
         async>
