@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "STM32 #11:  A simple SPI driver on STM32F103x with libopencm3"
-date:   2026-06-07 22:00:00 +0000
+date:   2026-06-06 22:00:00 +0000
 categories: STM32
 ---
 
@@ -369,7 +369,7 @@ The next step is to write the SD card driver! That driver will send SD commands 
 <script src="https://utteranc.es/client.js"
         repo="skoopsy/skoopsy.github.io"
         issue-term="pathname"
-        label="blog-embedded11"
+        label="blog-embedded12"
         theme="preferred-color-scheme"
         crossorigin="anonymous"
         async>
