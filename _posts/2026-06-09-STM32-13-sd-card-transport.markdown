@@ -524,7 +524,7 @@ The card then returns more 0xFF bytes while the STM32 sends the CMD8 packet and 
 
 So at this stage the card is not fully initialised yet, but the SPI wiring, command packet format, dummy clocking, R1 response handling, and ```CMD8``` R7 response read are all working.
 
-Next we will take a look and reading and writing memory blocks!
+Next we will take a look at finishing the init sequence, then reading and writing memory blocks!
 
 <script src="https://utteranc.es/client.js"
         repo="skoopsy/skoopsy.github.io"
