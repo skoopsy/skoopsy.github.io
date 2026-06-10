@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "STM32 #12:  Talking to a microSD card over SPI"
-date:   2026-06-08 22:00:00 +0000
+date:   2026-06-09 22:00:00 +0000
 categories: STM32
 ---
 
