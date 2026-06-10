@@ -21,7 +21,7 @@ sd_status_t sd_card_write_block(uint32_t block, const uint8_t *buffer);
 Once we confirm these functions working the FatFs implementation should be a little less difficult to figure out and debug.
 
 # A note on the SPI BSP developed in the last post
-In the last post I kept the SPI bsp deliberately small to understand what the core concepts were and to make it easy to follow. I have since spent many hours digging deeper into it making the package a little more defensive. I've summarised the main changes here, which I may cover in the future:
+In the [last post](https://skoopsy.dev/stm32/2026/06/06/STM32-12-spi.html) I kept the SPI bsp deliberately small to understand what the core concepts were and to make it easy to follow. I have since spent many hours digging deeper into it making the package a little more defensive. I've summarised the main changes here, which I may cover in the future:
 
 - SPI transfers now return a status instead of assuming things worked out okay
 - Wait loops now have timeout limits
