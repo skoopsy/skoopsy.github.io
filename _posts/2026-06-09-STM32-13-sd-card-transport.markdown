@@ -7,7 +7,9 @@ categories: STM32
 
 In the previous two posts I looked at why I want removable local storage on the STM32F103x, then built a small SPI1 board support package using libopencm3. The full storage stack I'm working towards looks like this:
 
+<div style="width:20%; margin: auto;">
 ![Architecture diagram](/docs/assets/img/blog-14-architecture.jpg)
+</div>
 
 This post focuses on the SD card transport layer. The goal is to talk to the card at the block level using the bsp_spi.h API so that I can read and write raw 512 byte sectors before messing with FatFs, because it will have no knowledge of how the micro is wired to the microSD card. That will happen through the disk I/O adapter layer between FatFs and SD Card transport. So the sd card driver will expose very basic functions such as:
 
