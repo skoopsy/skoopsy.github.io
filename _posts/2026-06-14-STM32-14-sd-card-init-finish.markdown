@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "STM32 #13:  Finishing microSD initialisation and asking its birthday"
-date:   2026-06-15 21:00:00 +0000
+date:   2026-06-14 21:00:00 +0000
 categories: STM32
 ---
 [Last time](https://skoopsy.dev/stm32/2026/06/09/STM32-13-sd-card-transport.html) I managed to get the STM32F103x talking to a microSD card over SPI. The card responded correctly to ```CMD0``` and ```CMD8```, which showed that the wiring, SPI mode, CMD packet format, dummy clocking, and R1/R7 response handling were functional. However I did not finish the initialisation process so let's do that now. This post will finish the initialisation process and ask it for some information about itself!
