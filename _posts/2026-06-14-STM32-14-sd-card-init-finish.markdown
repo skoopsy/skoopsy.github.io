@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "STM32 #13:  Finishing microSD initialisation and asking its birthday"
+title:  "STM32 #13:  Finishing microSD initialisation and asking for its birthday"
 date:   2026-06-14 21:00:00 +0000
 categories: STM32
 ---
