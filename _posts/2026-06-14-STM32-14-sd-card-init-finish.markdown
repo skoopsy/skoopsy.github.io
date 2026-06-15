@@ -554,7 +554,7 @@ uint8_t end_bit = cid[15] & 0x01u;
 
 There is not much here that we can really make use of other than the serial number for the card, and the manufacturing date: The CID manufacturing date field is 0x0E8. The upper 8 bits give the year offset from 2000, and the lower 4 bits give the month. That gives year 2000 + 14 = 2014 and month 8, so the card reports August 2014. 
 
-The CID register reports a manufacturing date of August 2014, which is odd because this card was bought recently. The other CID fields also do not decode into a clean manufacturer/product string, so I'm curious as to what that might mean. The important part here is that CMD10 returned a valid looking 16 byte payload after the expected data token. For those interested I'm now going to investigate the card capacity further due to the strange results from CMD10.
+The CID register reports a manufacturing date of August 2014, which is odd because this card was bought recently. The other CID fields also do not decode into a clean manufacturer/product string, so I'm curious as to what that might mean. CMD10 returned a valid looking 16 byte payload after the expected data token which is great. For those interested I'm now going to investigate the card capacity further due to the strange results from CMD10.
 
 # Investigating my microSD card further
 
@@ -568,9 +568,9 @@ MID: 0x03
 OID: 0x5344, which is ASCII for "SD"
 PNM: Often something like SDxxx, SUxxG or SCxxG
 
-Furthermore the markings on the back look like a fairly modern production marking, which doesn't really align with the 2014 reported manufacturing date! I found some online discussions suggesting that back side markings can differ between genuine and counterfeit cards, but I do not want to rely on that alone. The mismatch between the SanDisk label and the odd CID fields, plus the full-capacity and speed test results are curious.
+Furthermore the markings on the back look like a fairly modern production marking, which doesn't really align with the 2014 reported manufacturing date! I found some online discussions suggesting that back side markings can differ between genuine and counterfeit cards, but I do not want to rely on that alone. The mismatch between the SanDisk label and the odd CID fields, plus the full capacity and speed test results are curious.
 
-I have installed ```F3 Write 10.0``` with homebrew, there are equivalents for Windows such as H2testw and linux too. This will access the card, and try to write files to fill the reported capacity to test how close it actually is. This is due to many fakes being found that may be a much lower capacity card reporting at a higher capacity. I've plugged the card in and run ```f3write /Volumes/SUSPICIOUSMICROSDCARD/```.
+I have installed ```F3 Write 10.0``` with homebrew, there are equivalents for Windows such as H2testw and linux too. This will access the card, and try to write files to fill the reported capacity to test how close it actually is. This is due to many fakes being found that may be a much lower capacity card reporting at a higher capacity. I've plugged the card in and run ```f3write /Volumes/SUSMICROSD/```.
 
 F3 reports the free space at about 29.06 GB. That is close to the CSD derived 29.12 GiB once formatting overhead and decimal/binary unit differences are considered, so the capacity itself does not look fake from this test. The average F3 write speed was around 8.69 MB/s, which is below the labelled Class 10 expectation. That is another suspicious sign, although I should be careful here because the result can depend on the reader, USB hub, filesystem, write pattern, and test setup.
 
@@ -580,13 +580,13 @@ Here is a plot of the write speeds per 1GB file:
 
 To be fair the write speed is very consistent, although every fifth file seems to have a lower speed bound.
 
-The writes are complete so we'll run ```f3read /Volumes/SUSPICIOUSMICROSDCARD/```. to see how well it will read the files back, there should be no corruptions here. Hmm it is starting to look suspicious again, I would expect the F3 read speeds to be in the 70 - 90 MB/s range but currently I'm seeing 20 MB/s average speeds.
+The writes are complete so we'll run ```f3read /Volumes/SUSMICROSD/``` to see how well it will read the files back, there should be no corruptions here. Hmm it is starting to look suspicious again, I would expect the F3 read speeds to be much higher given the classification but currently I'm seeing 20 MB/s average speeds.
 
 ![F3 read speeds](/docs/assets/img/blog-15-f3-microsd-read-speed.png)
 
-I expected a SanDisk Ultra card to read faster than this, but the full F3 read passed without corruption, so this looks more like a suspicious/performance concern than a fake capacity result. However, the CID and performance are suspicious enough that I would not use it as a trusted reference card.
+I expected a SanDisk Ultra card to read faster than this, but the full F3 read passed without corruption, so this looks more like a suspicious/performance concern than a fake capacity result. The CID and performance are suspicious enough that I would not use it as a trusted reference card, but it is fine for my purposes for SPI logging at the moment.
 
-That concludes the post for today, next I'll finally tackle reading and writing raw blocks.
+That concludes the post for today, next I'll tackle reading and writing raw blocks.
 
 <script src="https://utteranc.es/client.js"
         repo="skoopsy/skoopsy.github.io"
