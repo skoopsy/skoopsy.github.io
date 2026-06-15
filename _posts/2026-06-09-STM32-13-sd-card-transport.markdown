@@ -35,7 +35,7 @@ The SD card layer does not call those low level wait helpers directly. It only s
 
 # What actually is SD over SPI?
 
-When an SD card powers up, by default it boots into its native "SD mode" which is very fast but uses quite a few connections ot make it happen as explained in the last post. To use it over SPI, the host has to send a reset command while chip select is asserted in the correct way.
+When an SD card powers up, by default it boots into its native "SD mode" which is very fast but uses quite a few connections to make it happen as explained in the last post. To use it over SPI, the host has to send a reset command while chip select is asserted in the correct way.
 
 Once the card is in the SPI mode, commands and data are exchanged as normal SPI bytes. The STM32 is the controller (master), and the microSD card is the peripheral (slave), and every byte sent by the STM32 also clocks one byte back from the SD card. This is why in the SPI BSP we added the transfer function rather than only separate read and write:
 
@@ -47,7 +47,7 @@ Even if we only care about reading data, we still have to transmit dummy bytes, 
 
 # SD Card initialisation sequence
 
-The intitialisation sequence for SPI is this:
+The initialisation sequence for SPI is this:
 
 - Power on
 - Keep CS (chip select) high
@@ -113,7 +113,7 @@ Some examples of the R1 responses:
 0xFF = 1111 1111 = not a valid R1 response, bit 7 is 1, keep waiting
 ```
 
-The important... bit... is that R1 is a bitfield. More than one flag can be set at once. So ```0x05``` is just:
+The important... bit... is that R1 is a bit field. More than one flag can be set at once. So ```0x05``` is just:
 
 ```c
 0x05 = 0x04 | 0x01
@@ -178,7 +178,7 @@ OCR Register:
 The CCS bit is important because it tells us whether the card uses block addressing. For SDHC/SDXC cards, reads and writes use 512 byte block numbers directly. For older SDSC cards, the command argument is a byte address.
 
 # Block addressing
-For the SDHC and SDXC cards, the address passed to CMD17 or CMD24 is a block numbers. For the older SDSC cards, the address is a byte address.
+For the SDHC and SDXC cards, the address passed to CMD17 or CMD24 is a block number. For the older SDSC cards, the address is a byte address.
 
 So for SDHC: 
 ```c
@@ -203,7 +203,7 @@ Once initialisation is good, the next step is to read a single raw block. The si
 6. Release CS
 7. Send an extra dummy byte
 
-At this point we're still below FasFS, just asking the card for a numbered 512 byte sector. I will leave this to the next post, as this one is getting big.
+At this point we're still below FatFS, just asking the card for a numbered 512 byte sector. I will leave this to the next post, as this one is getting big.
 
 # CMD24: Writing a 512 byte block
 This command writes a single block, here is the sequence:
@@ -221,12 +221,12 @@ This command writes a single block, here is the sequence:
 Write handling needs much more care than reading because the card could remain busy internally after the command/data is accepted. This will also be left to the next post.
 
 # The CRC byte
-In a SPI mode driver, CRC checking is usually not used after the initial startup commands, so dummy CRC bytes such as `0xFF` are commonly sent. ```CMD0``` and ```CMD8``` are startup exceptions:
+In an SPI mode driver, CRC checking is usually not used after the initial startup commands, so dummy CRC bytes such as `0xFF` are commonly sent. ```CMD0``` and ```CMD8``` are startup exceptions:
 
 |Command | CRC |
 |--------|-----|
-| CMD0.  | `0x95` |
-| CMD8.  | `0x87` |
+| CMD0   | `0x95` |
+| CMD8   | `0x87` |
 
 This is explained on ChaNs website in the links posted in the previous post.
 
@@ -258,7 +258,7 @@ typedef enum {
 } bsp_spi_status_t;
 ```
 
-The the SD card transport layer will have its own status enum because it should report SD card level errors too:
+The SD card transport layer will have its own status enum because it should report SD card level errors too:
 
 ```c
 typedef enum {
@@ -327,7 +327,7 @@ static sd_status_t sd_wait_r1(uint8_t *r1) {
     return SD_ERR_TIMEOUT;
 }
 ```
-To iterate again, the reason for checking `0x80` is that bit 7 is always zero in a valid R1 response. While the card is not ready it will usually keep returning `0xFF`, where bit 7 is still set. So the helper clocks the bus until it sees a byte where bit 7 has cleared.
+To reiterate, the reason for checking `0x80` is that bit 7 is always zero in a valid R1 response. While the card is not ready it will usually keep returning `0xFF`, where bit 7 is still set. So the helper clocks the bus until it sees a byte where bit 7 has cleared.
 
 We are going to add a helper function that will read the ```response_tail``` bytes that follow the R1 response for CMD8
 
@@ -414,7 +414,7 @@ static sd_status_t sd_send_command(uint8_t cmd,
 }
 ```
 
-For the first test I'm not going to fully initialise the card, but start the process just to prove that the card can enter SPI mode and respond to CMD0/CMD8, so lets give the first pass of ```sd_card_init()``` a go:
+For the first test I'm not going to fully initialise the card, but start the process just to prove that the card can enter SPI mode and respond to CMD0/CMD8, so let's give the first pass of ```sd_card_init()``` a go:
 
 ```c
 sd_status_t sd_card_init(void) {
