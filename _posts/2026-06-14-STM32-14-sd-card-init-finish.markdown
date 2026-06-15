@@ -17,11 +17,11 @@ The remaining sequence to complete initialisation is:
 - Check the CCS bit to detect SDHC/SDXC
 - Increase the SPI speed (Optional)
 
-After that, the card is ready for data-token style reads. Before jumping into CMD17 (not in this post), I’m going to use CMD9 and CMD10 to read the CSD and CID registers.
+After that, the card is ready for data token type reads. Before jumping into CMD17 (not in this post), I’m going to use `CMD9` and `CMD10` to read the CSD and CID registers.
 
 # CMD55 and ACMD41
 
-```ACMD41``` is the command used to ask the SD card to finish initialising. The annoying part is that it is an "application specific" command, so it is not sent by itself. You must send ```CMD55``` first which tells the card an application specific command is coming next.
+```ACMD41``` is the command used to ask the SD card to finish initialising. It is an "application specific" command, so it is not sent by itself, you have to send ```CMD55``` first, which tells the card an application specific command is coming next.
 
 The sequence is:
 
@@ -30,7 +30,7 @@ The sequence is:
 - Check R1 response
 - Repeat until R1 = 0x00 (Ready, no error flag)
 
-For SD v2 cards including SDHC and SDXC, the ```ACMD41``` should set the High Capacity Support (HCS) bit:
+For SD v2 cards including SDHC and SDXC,```ACMD41``` should set the High Capacity Support (HCS) bit:
 
 ```c
 #define SD_ACMD41_HCS 0x40000000u
@@ -40,7 +40,6 @@ The HCS bit is not the card's capacity, that is reported later with the CCS bit,
 I'm going to create some new macros to add to our existing code from the last post to make the code a bit more meaningful rather than having raw values in the main code block:
 
 ```c
-#define SD_CMD17 17u  
 #define SD_CMD55 55u // Send application command
 #define SD_ACMD41 41u // Initialise command
 #define SD_CMD58 58u // Read OCR register
@@ -74,7 +73,7 @@ static sd_card_type_t sd_card_type = SD_CARD_TYPE_UNKNOWN;
 ```
 
 # Waiting for ACMD41 to complete
-The next helper to build will repeatedly send CMD55 + ACMD41 until the card leaves idle.
+The next function to build will repeatedly send CMD55 + ACMD41 until the card leaves idle.
 
 ```c
 static sd_status_t sd_wait_ready_cmd55_acmd41(void) {
@@ -153,7 +152,7 @@ static sd_status_t sd_cmd58_read_ocr(uint32_t *ocr) {
     return SD_OK;
 }
 ```
-Like before the OCR bytes are returned most significant byte first, so the code rebuilds the 32 bit register by shifting each byte into the right position.
+Like before the OCR bytes are returned most significant byte first, so the code rebuilds the 32 bit register by bit shifting left each into uhhh... the right position.
 
 The Card Capacity Status (CCS) bit is key here, if it is set then the card is SDHC or SDXC and uses block addressing. If CCS is clear, then the card is an SDSC and uses byte addressing.
 
@@ -199,13 +198,13 @@ The first byte of each command packet has the form `01xxxxxx`, where the lower s
 
 Let's get a capture on the MOSI line first:
 
-![Oscilloscope MOSI Full](/docs/assets/img/blog-15-scope-mosi-full)
+![Oscilloscope MOSI Full](/docs/assets/img/blog-15-scope-mosi-full.png)
 
 There is a lot going on there so let's zoom in to the start:
-![Oscilloscope MOSI segment 0](/docs/assets/img/blog-15-scope-mosi-0)
+![Oscilloscope MOSI segment 0](/docs/assets/img/blog-15-scope-mosi-0.png)
 
 Here we see the sequence we have covered in the last post so everything looks good so far, let's move onto the next segment
-![Oscilloscope MOSI segment 1](/docs/assets/img/blog-15-scope-mosi-1)
+![Oscilloscope MOSI segment 1](/docs/assets/img/blog-15-scope-mosi-1.png)
 
 Brilliant, we can see the repeating sequence:
 - ```77 00 00 00 00 FF``` = CMD55
@@ -218,20 +217,20 @@ We have another repeat of CMD55 + ACMD41, then we move onto:
 - ```7A 00 00 00 00 FF``` = CMD58
 
 Brilliant so it looks like the last command in the init sequence was run on the MOSI, let's check the responses on the MISO line:
-![Oscilloscope MISO Full](/docs/assets/img/blog-15-scope-miso-full)
+![Oscilloscope MISO Full](/docs/assets/img/blog-15-scope-miso-full.png)
 
 Zooming into the first segment:
-![Oscilloscope MISO segment 0](/docs/assets/img/blog-15-scope-miso-0)
+![Oscilloscope MISO segment 0](/docs/assets/img/blog-15-scope-miso-0.png)
 Here we can see:
 - ```01``` = Response to CMD0 - Card Idle
 - ```01 00 00 01 AA FF``` =  Response to CMD8
 
 scrolling along:
-![Oscilloscope MISO segment 1](/docs/assets/img/blog-15-scope-miso-1)
+![Oscilloscope MISO segment 1](/docs/assets/img/blog-15-scope-miso-1.png)
 - ```01``` = Response to ACMD41 - Card still idle
 
 Then finally we have:
-![Oscilloscope MISO segment 2](/docs/assets/img/blog-15-scope-miso-2)
+![Oscilloscope MISO segment 2](/docs/assets/img/blog-15-scope-miso-2.png)
 
 First we have another response to ACMD41. Then finally we see:
 - ```00``` = ACMD41 response - Card ready
