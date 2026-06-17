@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "STM32 #14:  Reading raw blocks on a microSD with SPI"
-date:   2026-06-16 21:00:00 +0000
+date:   2026-06-16 13:00:00 +0000
 categories: STM32
 ---
 The [last post](https://skoopsy.dev/stm32/2026/06/14/STM32-14-sd-card-init-finish.html) finally finished the SD card initialisation sequence. The card left idle state using `CMD55` + `ACMD41`, `CMD58` returned a valid OCR value, and I used `CMD9` and `CMD10` to read the CSD and CID registers. This proves a few core foundations:
