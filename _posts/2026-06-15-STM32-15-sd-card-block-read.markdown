@@ -50,8 +50,8 @@ Here are the commands we will focus on:
 
 | CMD | Meaning	| Command byte |
 |-----|---------|--------------|
-| CMD17 | Read single block |`0x40 \| 17 = 0x51` |
-| CMD24 | Write single block | `0x40 \| 24 = 0x58` |
+| CMD17 | Read single block |`0x40 '\|' 17 = 0x51` |
+| CMD24 | Write single block | `0x40 '\|' 24 = 0x58` |
 
 Here are some macros that will help us use these commands in an easy to understand way:
 
