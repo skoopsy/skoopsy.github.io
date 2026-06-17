@@ -4,7 +4,7 @@ title:  "STM32 #14:  Reading raw blocks on a microSD with SPI"
 date:   2026-06-16 21:00:00 +0000
 categories: STM32
 ---
-The last post finally finished the SD card initialisation sequence. The card left idle state using `CMD55` + `ACMD41`, `CMD58` returned a valid OCR value, and I used `CMD9` and `CMD10` to read the CSD and CID registers. This proves a few core foundations:
+The [last post](https://skoopsy.dev/stm32/2026/06/14/STM32-14-sd-card-init-finish.html) finally finished the SD card initialisation sequence. The card left idle state using `CMD55` + `ACMD41`, `CMD58` returned a valid OCR value, and I used `CMD9` and `CMD10` to read the CSD and CID registers. This proves a few core foundations:
 
 1. The card can be initialised into SPI mode.
 2. The driver can detect SDHC/SDXC block addressing.
@@ -57,7 +57,6 @@ Here are some macros that will help us use these commands in an easy to understa
 
 ```c
 #define SD_CMD17 17u // Read single block
-#define SD_CMD24 24u // Write single block
 
 #define SD_BLOCK_SIZE 512u
 #define SD_DATA_TOKEN 0xFEu
@@ -147,9 +146,9 @@ This was pretty straight forward because of the way we set this up in the last p
 
 # Reading block 0
 
-Let's try a read only test first as I think we can't mess things up as badly as with the write process. Block 0 should contain a master boot record, partition table or filesystem boot sector depending on how the card has been formatted. Let's just confirm we get 512 bytes back first.
+Block 0 should contain a master boot record, partition table or filesystem boot sector depending on how the card has been formatted. Let's just confirm we get 512 bytes back first.
 
-Now there are again two ways to test this, by calling the previous UART print functionality developed, or to use a logic analyzer. Even with UART print logging it will be a pain to prove the 512 byte block length because of the way the code is setup. But you can write some code to convert the block to hex and print to the UART, for now I'm just going to show you the logic analyser, because we can directly tap into the MISO line and check the block bytes being sent back by the SD card which will be a solid protocol level confirmation of its functionality. So to test this my main code will have this snippet, you'll have to make sure SD_BLOCK_SIZE is in the sd_card.h file to make it publicly accessible.
+Now there are again two ways to test this, by calling the previous UART print functionality developed, or to use a logic analyzer. You can write some code to convert the block to hex and print to the UART, for now I'm just going to show you the logic analyser, because we can directly tap into the MISO line and check the block bytes being sent back by the SD card, which will be a solid confirmation of the protocol implementation. So to test this my main code will have this snippet, you'll have to make sure SD_BLOCK_SIZE is in the sd_card.h file or main to make it publicly accessible.
 
 ```c
     // SD Card - Init
@@ -177,11 +176,13 @@ It's a good sign if both pass and do not report an error over UART. I've also ad
     while (1) {}
 ```
 
-The while loops just make it easier to read the UART and are not integral. So the UART output works but let's get the logic analyser on it to take a look at the whole block and check the protocol sequence
+The while loops just make it easier to read the UART and are not integral. 
+
+The UART output works but let's get the logic analyser on it to take a look at the whole block and check the protocol sequence:
 
 ![MOSI line on scope](/docs/assets/img/blog-16-scope-mosi.png)
 
-There is a lot here but a quick poke around shows everything seems to be in order, here is the initialisation sequence and the read block request, remember the command packet is 6 bytes, everything else is a dummy clock:
+There is a lot here but a quick poke around shows everything seems to be in order, here is the initialisation sequence and the read block request, remember the command packet is 6 bytes, everything else is a dummy clock, here is a printout of the logic analyser decoding, I;'ve tried to split it up to make it easier to read:
 
 ```
  FF FF FF FF FF FF FF FF FF FF // 80 clock dummy bytes
@@ -285,7 +286,7 @@ The 512 byte block itself is not anything to do with the SD card protocol rememb
 
 There are some interesting lines there: "Invalid partition table, Error loading operating system, Missing operating system". This is pretty cool, the first line indicates this likely is the start of a MBR style sector, the last two bytes of the block `55 AA` are interesting too from the [MBR os dev wiki](https://wiki.osdev.org/MBR_%28x86%29?); it says the last two bytes should be `0x55` then `0xAA` for a "Valid bootsector". I'm fairly confident it is an MBR sector, but FAT boot sectors also end in `55 AA`. 
 
-At this point I had already proved the SD protocol `CMD17` returned a valid R1 response, a data token, 512 bytes, and two CRC bytes. Everything after this is no longer really SD card protocol. It is just the content stored inside those 512-byte sectors. I went a little further than planned here, because it was really interesting to explore the card a little. 
+At this point I had already proved the SD protocol `CMD17` returned a valid R1 response, a data token, 512 bytes, and two CRC bytes. Everything after this is no longer really SD card protocol. It is just the content stored inside those 512 byte sectors. I went a little further than planned here, because it was really interesting to explore the card a little. So if you just want to read about the write sequence then skip this rest of this post and go to the next one.
 
 # Walking the filesystem
 
@@ -384,7 +385,7 @@ Hey we have FAT32 written, great news. Now I flicked through the [Microsoft FAT 
 
 Everything seems to line up here so I'm convinced now we are following the FAT32 links. One cool thing we can derive from this is the sectors per cluster = 32, so a cluster size = 32*512 = 16 KiB. Finally now with this if we use the BPB_RootClus value we find where the root directory starts. So to find the first data sector:
 ```
-First data sector = partition_table_lba 
+first_data_sector = partition_table_lba 
                     + reserved_sector_count 
                     + number_of_fats * fat_size_32
                   = 35408 +32 + 2*14873 
