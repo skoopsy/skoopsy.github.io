@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "STM32 #7: UART Communication"
+title:  "STM32 #7: UART Communication on STM32F1xx with libopencm3"
 date:   2025-09-14 19:00:00 +0000
 categories: STM32
 ---
