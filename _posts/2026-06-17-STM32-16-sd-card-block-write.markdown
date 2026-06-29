@@ -20,8 +20,8 @@ The goals for this post are simple:
 If that works, then the driver can provide the two primitives FatFs will need:
 
 ```c
-sd_status_t sd_card_read_block(uint32_t block_index, uint8_t *buffer);
-sd_status_t sd_card_write_block(uint32_t block_index, const uint8_t *buffer);
+sd_status_t sd_card_cmd17_read_block(uint32_t block_index, uint8_t *buffer);
+sd_status_t sd_card_cmd24_write_block(uint32_t block_index, const uint8_t *buffer);
 ```
 
 At that point, `disk_read()` and `disk_write()` should mostly become translation wrappers between FatFs and our lower level SD card driver.
@@ -184,7 +184,7 @@ sd_status_t sd_card_cmd24_write_block(uint32_t block_index,
         return SD_OK;
 }
 ```
-It might look like a lot but it is all things we've seen before and just follows the write sequence outlined earlier, with some error handling. the sd_wait_write_complete() part towards the end is important, if we skip this and send another command whilst the card is busy writing flash the command will probably fail or worse.
+It might look like a lot but it is all things we've seen before and just follows the write sequence outlined earlier, with some error handling. The sd_wait_write_complete() part towards the end is important, if we skip this and send another command whilst the card is busy writing flash the command will probably fail or worse.
 
 We have to be careful as we are just writing random blocks here without using FatFS, but because we created and accessed the HELLO.TXT file in the last post and I still have it on the card, I now have a known sector that belongs to the existing HELLO.TXT file, so I can overwrite that sector and check whether the file contents change.
 
@@ -204,7 +204,7 @@ _          1  = 11
 SKOOPSY    7  = 18
 \r\n       2  = 20
 ```
-Lets replace it with another 20 byte string: `HELLO_FROM_STM32!!\r\n`
+Let's replace it with another 20 byte string: `HELLO_FROM_STM32!!\r\n`
 
 # Comparing buffers
 We can write this function so that we can compare the buffer on the micro after a write then read of the same block. But we will also probably check on the laptop for good measure. Here is the compare function:
@@ -306,7 +306,7 @@ to
 HELLO_FROM_STM32!!\r\n
 ```
 
-I'm happy with that; we can now confidently read and write raw blocks with the sd card driver. A note on this though, this worked because HELLO.TXT was already a file, and I knew where the file contents were so could overwrite it fairly easily without changing the file size or allocation. I didn't create a new file, update timestamps, or allocate clusters. That is for FatFS to do!
+I'm happy with that; we can now confidently read and write raw blocks with the SD card driver. A note on this though, this worked because HELLO.TXT was already a file, and I knew where the file contents were so could overwrite it fairly easily without changing the file size or allocation. I didn't create a new file, update timestamps, or allocate clusters. That is for FatFS to do!
 
 <script src="https://utteranc.es/client.js"
         repo="skoopsy/skoopsy.github.io"

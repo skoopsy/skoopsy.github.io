@@ -18,7 +18,7 @@ sd_status_t sd_card_init(void);
 sd_status_t sd_card_read_block(uint32_t block, uint8_t *buffer);
 sd_status_t sd_card_write_block(uint32_t block, const uint8_t *buffer);
 ```
-Once we confirm these functions working the FatFs implementation should be a little less difficult to figure out and debug.
+Once we confirm these functions working the FatFs implementation should be a little less difficult to figure out and debug. There is a lot of great information on microSD over SPI on the [elm-ChaN site](https://elm-chan.org/docs/mmc/mmc_e.html).
 
 # A note on the SPI BSP developed in the last post
 In the [last post](https://skoopsy.dev/stm32/2026/06/06/STM32-12-spi.html) I kept the SPI bsp deliberately small to understand what the core concepts were and to make it easy to follow. I have since spent many hours digging deeper into it making the package a little more defensive. I've summarised the main changes here, which I may cover in the future:
