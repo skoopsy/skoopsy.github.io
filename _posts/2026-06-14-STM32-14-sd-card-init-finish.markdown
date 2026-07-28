@@ -82,7 +82,7 @@ static sd_status_t sd_wait_ready_cmd55_acmd41(void) {
     for (uint32_t i=0; i<SD_ACMD41_ATTEMPTS; ++i) {
         sd_status_t status;
     
-        // Send CMD55 - Prefix before application-specific command
+        // Send CMD55 - Prefix before application specific command
         status = sd_send_command(SD_CMD55,
                                 0x00000000u,
                                 SD_DUMMY_CRC,

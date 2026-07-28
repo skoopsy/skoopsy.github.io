@@ -5,13 +5,12 @@ date:   2026-06-16 19:40:00:00 +0000
 categories: STM32
 ---
 
-The [last post](https://skoopsy.dev/stm32/2026/06/16/STM32-15-sd-card-block-read.html) finished the raw block read path. Using `CMD17`, I read block 0, followed the MBR to the FAT32 boot sector, found the root directory, decoded the HELLO.TXT directory entry, and finally read the actual file contents from the data sector. That proved the read side of the driver. But there was one important cheat in that test: the file itself was still written by macOS.
-
+The [last post](https://skoopsy.dev/stm32/2026/06/16/STM32-15-sd-card-block-read.html) finished the raw block read path. 
 So this time I want to build and test the other half of our low level SD driver: writing a raw 512 byte block from the STM32 using `CMD24`.
 
 One warning before going further: this is still not filesystem aware writing. I am not asking FatFs to create a file, allocate a cluster, update a directory entry, or modify the FAT tables. I am just writing 512 bytes directly to a block address. If I write to the wrong block, I can corrupt the card. So this test belongs on a disposable card, or at least a card whose contents I do not care about.
 
-The goals for this post are simple:
+The goals for this post are to:
 
 - write 512 bytes to a known test block
 - read the same block back with CMD17
@@ -24,9 +23,9 @@ sd_status_t sd_card_cmd17_read_block(uint32_t block_index, uint8_t *buffer);
 sd_status_t sd_card_cmd24_write_block(uint32_t block_index, const uint8_t *buffer);
 ```
 
-At that point, `disk_read()` and `disk_write()` should mostly become translation wrappers between FatFs and our lower level SD card driver.
+At that point, `disk_read()` and `disk_write()` should mostly become translation wrappers between FatFs and the lower level SD card driver.
 
-# CMD24
+# CMD24: Write block
 
 For the SDHC/SDXC card I'm using, the argument passed to CMD24 is a block number. So if I want to write block 100,000, I send 100,000 as the command argument. For older SDSC cards, the argument is a byte address, so the block index would need to be multiplied by 512 via the helper function developed in the last post.
 
@@ -69,7 +68,7 @@ xxxxx010 = CRC error
 xxxxx011 = write error
 ```
 
-So to check if data has been accepted run this code:
+So to check if data has not been accepted run this code:
 ```c
 if ((data_response & SD_DATA_RESPONSE_MASK) != SD_DATA_ACCEPTED) { 
         return SD_ERR_BAD_RESPONSE; 
