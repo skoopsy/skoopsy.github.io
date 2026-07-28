@@ -25,12 +25,12 @@ This post we will just build the read_block function.
 
 # Block addressing
 
-For SDHC/SDXC cards, the address passed to `CMD17` and `CMD24` is a 512 byte block number. For older cards, the address is a byte address. For example, if we wanted to access block 100 000:
+For SDHC/SDXC cards, the address passed to `CMD17` (Read a block) and `CMD24` (write a block) is a 512 byte block number. For older cards, the address is a byte address. For example, if we wanted to access block 100 000:
 
 - SDSC address = 100 000 * 512
 - SDHC/SDXC address = 100 000
 
-Let's create a simple helper to abstract that conversation away:
+Let's create a simple helper to abstract that conversion away:
 
 ```c
 static uint32_t sd_block_to_card_address(uint32_t block_index) {

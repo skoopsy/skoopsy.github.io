@@ -18,7 +18,7 @@ sd_status_t sd_card_init(void);
 sd_status_t sd_card_read_block(uint32_t block, uint8_t *buffer);
 sd_status_t sd_card_write_block(uint32_t block, const uint8_t *buffer);
 ```
-Once we confirm these functions working the FatFs implementation should be a little less difficult to figure out and debug.
+Once we confirm these functions working the FatFs implementation should be a little less difficult to figure out and debug. There is a lot of great information on microSD over SPI on the [elm-ChaN site](https://elm-chan.org/docs/mmc/mmc_e.html).
 
 # A note on the SPI BSP developed in the last post
 In the [last post](https://skoopsy.dev/stm32/2026/06/06/STM32-12-spi.html) I kept the SPI bsp deliberately small to understand what the core concepts were and to make it easy to follow. I have since spent many hours digging deeper into it making the package a little more defensive. I've summarised the main changes here, which I may cover in the future:
@@ -75,7 +75,7 @@ Here is a good [summary of the command/response registers](https://problemkaputt
 
 # Waiting for a response
 
-SD cards are a little different to most other SPI peripherals because the response does not necessarily appear immediately. After sending a command the card might return ```0xFF``` for several bytes before finally returning a useful response. So the driver needs a helper function that keeps clocking the bus and waiting for either a valid response, or a timeout to be hit. This is why the timeout additions in the SPI BSP become quite important. The SD card layer should not have to assume the card will always respond.
+SD cards are a little different to most SPI peripherals because the response does not necessarily appear immediately. After sending a command the card might return ```0xFF``` for several bytes before returning a useful response whilst it is reading or writing. So the driver needs a helper function that keeps clocking the bus and waiting for either a valid response, or a timeout to be hit. This is why the timeout additions in the SPI BSP became important. The SD card layer shouldn't assume the card will always respond immediately or at all.
 
 # SD command responses in SPI mode
 There are 3 main response types that will appear during initialisation
@@ -175,7 +175,7 @@ OCR Register:
 | 15 | VDD Operating Voltage 2.7 - 2.8 supported | no | yes |
 | 14:0 | Reserved |
 
-The CCS bit is important because it tells us whether the card uses block addressing. For SDHC/SDXC cards, reads and writes use 512 byte block numbers directly. For older SDSC cards, the command argument is a byte address.
+The CCS bit tells us if the card uses block addressing. For SDHC/SDXC cards, reads and writes use 512 byte block numbers directly. For older SDSC cards, the command argument is a byte address.
 
 # Block addressing
 For the SDHC and SDXC cards, the address passed to CMD17 or CMD24 is a block number. For the older SDSC cards, the address is a byte address.
