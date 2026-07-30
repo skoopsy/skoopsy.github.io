@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "STM32 #18: Using the FatFs API for Reading and Writing Files"
+title:  "STM32 #17: Using the FatFs API for Reading and Writing Files"
 date:   2026-07-29 10:00:00 +0000
 categories: STM32
 ---
@@ -371,7 +371,7 @@ Now just call both test_fatfs_write() and test_fatfs_read() in main.c and monito
 <script src="https://utteranc.es/client.js"
         repo="skoopsy/skoopsy.github.io"
         issue-term="pathname"
-        label="blog-embedded18"
+        label="blog-embedded17"
         theme="preferred-color-scheme"
         crossorigin="anonymous"
         async>
