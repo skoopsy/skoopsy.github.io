@@ -8,6 +8,7 @@ categories: STM32
 The [last post](https://skoopsy.dev/stm32/2026/07/27/STM32-17-fatfs-mai.html) connected the sd_card.c driver we made to the FatFs Media Access Interface (MAI) at diskio.c. Previously we read, wrote, and traversed the SD card manually by reading raw hex and finding the corresponding metadata. Now we should be able to abstract things like sectors, clusters, FAT tables, boot sectors and SPI away and just think about creating, reading, and writing files. 
 
 A recap on where we are in the file system stack:
+
 ![Storage architecture](/docs/assets/img/blog-14-architecture.jpg)
 
 It is worth clarifying that we are testing the FatFs API which uses the Media Access Interface developed previously. Hopefully this makes the boundary a little clearer:
@@ -67,7 +68,7 @@ return values: ```FR_OK, FR_INVALID_DRIVE, FR_DISK_ERR, FR_NOT_READY, FR_NOT_ENA
 
 Find out more [here](https://elm-chan.org/fsw/ff/doc/mount.html).
 
-## Test f_mount()
+## Test: Mounting the filesystem
 
 For the following tests I'm going to create a sort of hardware integration test in ```tests/hardware/test_fatfs.c``` which I will manually call in main.c, this way the tests are separated enough that I can reuse them later with a small embedded test runner. If you are following this then don't forget to add them to your Makefile!
 
@@ -260,6 +261,7 @@ bool test_fatfs_write(void) {
         return true;
 }
 ```
+Have a go at calling this in main, hopefully it passes!
 
 # Reading a file:
 
@@ -350,7 +352,7 @@ bool test_fatfs_read(void) {
 }
 ```
 
-We can go a step further and check that both the read buffer and original MSG are the same using ```memcmp``` for the standard library. ```memcmp``` compares the first n characters from two buffers, zero is returned if identical. I've added this to ```test_fatfs_read()``` above the UART file contents printout:
+We can go a step further and check that both the read buffer and original MSG are the same using ```memcmp``` from the standard library. ```memcmp``` compares the first n characters from two buffers, zero is returned if identical. I've added this to ```test_fatfs_read()``` above the UART file contents printout:
 
 ```c
 #include <string.h> // Needed for memcmp
