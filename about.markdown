@@ -16,5 +16,5 @@ Get in touch: skoopsy@proton.me
 
 
 
-IMPORTANT: To use any post on any part of my blog for any form of AI, machine learning, LLM training, there is a strict licensing fee of £1,000,000 per use, please get in touch for more details. By using any of the data on my blog for the mentioned purposes you agree to these terms.
+IMPORTANT: To use any post on any part of my blog for any form of AI, machine learning, or LLM training, there is a strict licensing fee of £1,000,000 per use. Please get in touch for more details. ^_^b
 
