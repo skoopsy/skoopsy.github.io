@@ -5,13 +5,12 @@ date:   2026-07-30 10:00:00 +0000
 categories: STM32
 ---
 
-In this post I'm going to add my own storage API on top of the FatFs layer that was tested in the last post. This will give the firmware a simple way to record events to a normal file on the SD card, which is a small but important step towards a useful data logger.
+In this post I'm going to add a storage API on top of the FatFs layer that was tested in the last post. This gives the firmware a way to record events to a normal file on the SD card without dealing with FatFs calls. Other parts of the code should be able to call things like `storage_log_event("Initialisation successful")` or, later, `storage_write_sensor_sample(&sample)` without knowing about `f_mount()`, `f_open()`, `f_write()`, file paths, or FatFs objects.
 
-I plan to give the rest of the application one clear entry point for storage, rather than peppering FatFs calls all over the place. I want other parts of the code to be able to call things like `storage_log_event("Initialisation successful")` or, later, `storage_write_sensor_sample(&sample)` without knowing about `f_mount()`, `f_open()`, `f_write()`, file paths, or FatFs objects.
+[previous post](https://skoopsy.dev/stm32/2026/07/29/STM32-18-using-fatfs-diskio-for-reading-and-writing-microsd.html)
 
-This post is really about stopping FatFs from leaking into the rest of the firmware.
 
-Note: I do need to be careful here, SD card writes can block. FatFs may need to update file data, directory entries, FAT tables etc. The SD card itself can be busy internally writing. In the future the architecture might follow something like:
+Note: SD card writes can block. FatFs may need to update file data, directory entries, FAT tables etc. The SD card itself can be busy internally writing. In the future the architecture might follow something like:
 
 ```
 Sensor read -> sample to RAM buffer -> main loop calls storage_process() -> storage layer write chunks to SD card.
@@ -33,7 +32,7 @@ The requirements for this will be to:
 3. Append log messages
 4. Keep FatFs specifics out of main.c
 
-Here is the app_storage.h:
+Here is the header - app_storage.h:
 
 ```c
 #pragma once
@@ -60,11 +59,11 @@ storage_status_t storage_log_event(const char *message);
 
 The log file to be created will be called: ```0:/EVENT.LOG```.
 
-I'm sticking with the 8.3 style filenames for FAT32 for now so that I don't have to add in long file name support making the FatFs memory burden larger.
+I'm sticking with the 8.3 style filenames for FAT32 so I don't have to add in long file name support making the FatFs memory burden larger.
 
 # Storage implementation
 
-I am going to reuse the tests developed in the last post to create the functions for app_storage.c so for a more detailed explanation of how I'm using the FatFs API check out my [last post.](https://skoopsy.dev/stm32/2026/07/29/STM32-18-using-fatfs-diskio-for-reading-and-writing-microsd.html)
+I'll reuse the tests from the last post to create the functions for app_storage.c so for a more detailed explanation check the [last post](https://skoopsy.dev/stm32/2026/07/29/STM32-18-using-fatfs-diskio-for-reading-and-writing-microsd.html) out.
 
 Let's set up app_storage.c:
 ```c
@@ -84,7 +83,7 @@ static bool storage_initialised = false; // Set flag after mounting
 
 I'm keeping the filesystem object ```storage_fs``` static so that it is private to the module, but will stay for the lifetime of the program so that it can be used by any of the app_storage functions as and when required.
 
-First we will build the initialisation function, which mounts the FatFs volume:
+ Let's start with the initialisation function, which mounts the FatFs volume:
 
 ```c
 storage_status_t storage_init(void) {
@@ -107,8 +106,7 @@ storage_status_t storage_init(void) {
 }
 ```
 
-Then we can write a function to write event logs which is basically our write test from the last post but I'm using different f_open() modes this time - I want to open a file and if the file doesn't exist already then create it, set it to allow writing to the file, AND make sure to set the read/write pointer to the end of the file, so that new logs don't overwrite old logs. Here is the [list of f_open mode flags available]
-(https://elm-chan.org/fsw/ff/doc/open.html):
+Then we can write a function to write event logs which is basically our write test from the last post but I'm using different ```f_open()``` modes this time - I want to open a file and if the file doesn't exist already then create it, set it to allow writing to the file, AND make sure to set the read/write pointer to the end of the file, so that new logs don't overwrite old logs. Here is the [list of f_open mode flags available](https://elm-chan.org/fsw/ff/doc/open.html):
 
 | Flags                 | Meaning |
 |-----------------------|---------|
@@ -187,7 +185,7 @@ storage_status_t storage_log_event(const char *message) {
 }
 ```
 
-As you can see creating and appending to files with FatFs is very simple! For occasional event logs, this is fine. The code opens the log file, appends the message, appends a newline, and closes the file again. That is simple and robust enough for low rate event logging. I would not use this exact pattern for streaming sensor data though. For that I would rather buffer samples in RAM and write larger chunks to the SD card.
+As you can see creating and appending to files with FatFs is very simple! For occasional event logs, this is fine. The code opens the log file, appends the message, appends a newline, and closes the file again. That is simple and robust enough for low rate event logging. I wouldn't use this for streaming sensor data though, you'd probably buffer samples in RAM and write larger chunks to the SD card.
 
 
 Now into our main file we will have a go at using the API, and it is now blissfully simple to write to the log files:
@@ -208,7 +206,7 @@ int main (void) {
 
 That is it. Easy peasy. Now you can try adding things like a real time clock readout to the beginning of the message, but that can be done within the app_storage.c file now privately!
 
-Lastly a little trick, that I realised whilst thinking about the status error code flow: later I can add a helper function to convert a `storage_status_t` value into a printable string:
+Lastly, a little trick that I spotted whilst thinking about with the status error code flow; later I can add a helper function to convert a `storage_status_t` value into a printable string:
 
 ```c
 const char *storage_status_string(storage_status_t status);
@@ -220,6 +218,7 @@ Then I can print the status over UART or include it in a log:
 uart_write_string(storage_status_string(status));
 ```
 
+Happy hacking!
 
 <script src="https://utteranc.es/client.js"
         repo="skoopsy/skoopsy.github.io"
