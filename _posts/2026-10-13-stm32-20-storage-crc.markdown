@@ -91,7 +91,8 @@ uint32_t crc32_compute(const uint8_t *data, size_t length)
     }
 
     return crc ^ CRC_FINAL_XOR;
-}```
+}
+```
 
 This processes each byte and updates the CRC register eight times, once for each bit. This processes the data least significant bit first. It uses the reflected form of the selected generator polynomial. I've defined the polynomial and other CRC parameters separately so that the implementation can be checked against known reference values.
 
